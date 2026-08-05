@@ -236,7 +236,10 @@ class MainActivity : AppCompatActivity(), MainHost {
 
     private fun requiredPermissions(): List<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            listOf(Manifest.permission.READ_MEDIA_AUDIO)
+            listOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.POST_NOTIFICATIONS,
+            )
         } else {
             listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
