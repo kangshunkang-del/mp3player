@@ -21,7 +21,6 @@
         android:layout_height="72dp"
         android:background="@drawable/bg_bottom_dock"
         android:paddingHorizontal="24dp"
-        app:itemActiveIndicatorColor="@color/chip_bg"
         app:itemIconSize="28dp"
         app:itemRippleColor="@color/chip_bg"
         app:labelVisibilityMode="labeled"
