@@ -35,6 +35,7 @@ class AppUpdateManager(private val context: Context) {
         val connection = open(VERSION_URL)
         try {
             check(connection.responseCode in 200..299) { "检查更新失败（${connection.responseCode}）" }
+            check(connection.url.protocol == "https") { "更新服务被重定向到不安全地址" }
             val json = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
             val apkUrl = json.getString("apkUrl")
             check(URL(apkUrl).protocol == "https") { "更新地址不安全" }
@@ -63,6 +64,7 @@ class AppUpdateManager(private val context: Context) {
             val partial = File(updateDir, "${target.name}.download")
             try {
                 check(connection.responseCode in 200..299) { "下载更新失败（${connection.responseCode}）" }
+                check(connection.url.protocol == "https") { "更新下载被重定向到不安全地址" }
                 val expected = when {
                     info.sizeBytes > 0 -> info.sizeBytes
                     connection.contentLengthLong > 0 -> connection.contentLengthLong
@@ -72,13 +74,18 @@ class AppUpdateManager(private val context: Context) {
                     partial.outputStream().buffered().use { output ->
                         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                         var copied = 0L
+                        var lastProgress = -1
                         while (true) {
                             val count = input.read(buffer)
                             if (count < 0) break
                             output.write(buffer, 0, count)
                             copied += count
                             if (expected > 0) {
-                                onProgress(((copied * 100L) / expected).toInt().coerceIn(0, 100))
+                                val progress = ((copied * 100L) / expected).toInt().coerceIn(0, 100)
+                                if (progress != lastProgress) {
+                                    lastProgress = progress
+                                    onProgress(progress)
+                                }
                             }
                         }
                     }
