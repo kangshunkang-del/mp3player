@@ -43,8 +43,8 @@
 
 ### 外观主题
 
-- **应用主题**：网易云、塞尔达、马里奥
-- **浅色 / 深色 / 跟随系统**
+- **驾驶配色**：夜航（暖琥珀）、林野（深绿金）、赛道（炭黑红）
+- 三套方案均为低眩光深色界面，避免夜间驾驶时大面积亮底
 - 歌词配色与应用主题独立
 
 ### 车机操控
@@ -85,13 +85,14 @@
 
 ### GitHub Actions（推荐）
 
-1. 推送代码到 GitHub（文件放在 `app/` 目录下，**不要覆盖**仓库根目录的 `build.gradle.kts`）
-2. **Actions** 页手动 **Run workflow**
-3. 下载 `app-debug.apk`
+1. 推送到 `main`，或在 **Actions** 页手动运行 `Build APK`
+2. 云端依次执行单元测试、Android Lint 和 Release 构建
+3. 从 Actions 构建产物或 `v4.1.0-build` 预发布页下载未签名 APK
+4. 使用车机当前版本相同的证书签名后，上传腾讯云 `releases/mp3-latest.apk`
 
 ### Android Studio 本地编译
 
-输出路径：`app/build/outputs/apk/debug/app-debug.apk`
+Release 输出路径：`app/build/outputs/apk/release/app-release-unsigned.apk`
 
 ---
 
@@ -115,7 +116,7 @@ U 盘安装或 `adb install -r app-debug.apk`
 1. **设置** 中添加扫描目录 → **扫描音乐**
 2. 打开 App 即在 **播放页**；默认 **随机播放**
 3. 点黑胶唱片看歌词，手指上下滑可浏览整首歌词
-4. **设置 → 歌词配色 / 字体** 调整样式；**设置 → 外观** 换应用主题
+4. **设置 → 歌词配色 / 字体** 调整样式；**设置 → 驾驶配色** 换界面方案
 5. 开启悬浮歌词 / 仪表屏歌词（仪表屏需车机支持副屏）
 
 ---
