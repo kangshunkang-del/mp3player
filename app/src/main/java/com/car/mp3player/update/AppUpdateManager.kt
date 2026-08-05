@@ -10,7 +10,6 @@ import com.car.mp3player.BuildConfig
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -39,12 +38,16 @@ class AppUpdateManager(private val context: Context) {
             val json = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
             val apkUrl = json.getString("apkUrl")
             check(URL(apkUrl).protocol == "https") { "更新地址不安全" }
+            val sha256 = json.getString("sha256").lowercase()
+            check(sha256.matches(Regex("^[a-f0-9]{64}$"))) { "更新包校验信息无效" }
+            val sizeBytes = json.getLong("sizeBytes")
+            check(sizeBytes > 0L) { "更新包大小无效" }
             AppUpdateInfo(
                 version = json.getString("version"),
                 versionCode = json.getInt("versionCode"),
                 apkUrl = apkUrl,
-                sha256 = json.getString("sha256").lowercase(),
-                sizeBytes = json.optLong("sizeBytes", -1L),
+                sha256 = sha256,
+                sizeBytes = sizeBytes,
                 notes = json.optString("notes", ""),
             )
         } finally {
@@ -83,7 +86,7 @@ class AppUpdateManager(private val context: Context) {
                 if (info.sizeBytes > 0) {
                     check(partial.length() == info.sizeBytes) { "更新包大小校验失败" }
                 }
-                check(partial.sha256() == info.sha256) { "更新包完整性校验失败" }
+                check(UpdateIntegrity.sha256(partial) == info.sha256) { "更新包完整性校验失败" }
                 if (target.exists()) target.delete()
                 check(partial.renameTo(target)) { "无法保存更新包" }
                 onProgress(100)
@@ -125,19 +128,6 @@ class AppUpdateManager(private val context: Context) {
             setRequestProperty("Accept", "application/json, application/vnd.android.package-archive")
             setRequestProperty("User-Agent", "MP3Player/${BuildConfig.VERSION_NAME}")
         }
-
-    private fun File.sha256(): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        inputStream().buffered().use { input ->
-            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-            while (true) {
-                val count = input.read(buffer)
-                if (count < 0) break
-                digest.update(buffer, 0, count)
-            }
-        }
-        return digest.digest().joinToString("") { "%02x".format(it) }
-    }
 
     companion object {
         const val VERSION_URL =

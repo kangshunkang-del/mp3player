@@ -36,6 +36,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
@@ -244,6 +245,7 @@ class SettingsFragment : Fragment() {
                     }
                 }
                 .onFailure { error ->
+                    if (error is CancellationException) throw error
                     binding.updateStatus.text = getString(
                         R.string.settings_update_failed,
                         error.message ?: "网络不可用",
@@ -278,6 +280,7 @@ class SettingsFragment : Fragment() {
                     }
                 }
             }.onFailure { error ->
+                if (error is CancellationException) throw error
                 binding.updateStatus.text = getString(
                     R.string.settings_update_failed,
                     error.message ?: "网络不可用",
