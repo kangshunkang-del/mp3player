@@ -141,6 +141,12 @@ class MusicPlaybackService : MediaSessionService() {
                     }
                 })
             }
+            // Establish the media-session and hardware-button route before the
+            // first foreground notification is built. This prevents a head unit
+            // from seeing an ordinary notification first and assigning the
+            // steering-wheel controls to another player.
+            ensureMediaSession()
+            registerMediaButtonReceiver()
         }.onFailure {
             android.util.Log.e(TAG, "onCreate failed", it)
         }

@@ -35,7 +35,7 @@ class AppUpdateManager(private val context: Context) {
     suspend fun check(): AppUpdateInfo = withContext(Dispatchers.IO) {
         val connection = open(VERSION_URL)
         try {
-            check(connection.responseCode in 200..299) { "检查更新失败（\${connection.responseCode}）" }
+            check(connection.responseCode in 200..299) { "检查更新失败（${connection.responseCode}）" }
             val json = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
             val apkUrl = json.getString("apkUrl")
             check(URL(apkUrl).protocol == "https") { "更新地址不安全" }
@@ -56,10 +56,10 @@ class AppUpdateManager(private val context: Context) {
         withContext(Dispatchers.IO) {
             val connection = open(info.apkUrl)
             val updateDir = File(context.externalCacheDir ?: context.cacheDir, "updates").apply { mkdirs() }
-            val target = File(updateDir, "mp3-player-\${info.version}.apk")
-            val partial = File(updateDir, "\${target.name}.download")
+            val target = File(updateDir, UpdateFilePolicy.apkFileName(info.version))
+            val partial = File(updateDir, "${target.name}.download")
             try {
-                check(connection.responseCode in 200..299) { "下载更新失败（\${connection.responseCode}）" }
+                check(connection.responseCode in 200..299) { "下载更新失败（${connection.responseCode}）" }
                 val expected = when {
                     info.sizeBytes > 0 -> info.sizeBytes
                     connection.contentLengthLong > 0 -> connection.contentLengthLong
@@ -103,11 +103,11 @@ class AppUpdateManager(private val context: Context) {
             return InstallRequest.PermissionRequired(
                 Intent(
                     Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:\${context.packageName}"),
+                    Uri.parse("package:${context.packageName}"),
                 ),
             )
         }
-        val uri = FileProvider.getUriForFile(context, "\${context.packageName}.update_files", apk)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.update_files", apk)
         context.startActivity(
             Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
@@ -123,7 +123,7 @@ class AppUpdateManager(private val context: Context) {
             readTimeout = 45_000
             instanceFollowRedirects = true
             setRequestProperty("Accept", "application/json, application/vnd.android.package-archive")
-            setRequestProperty("User-Agent", "MP3Player/\${BuildConfig.VERSION_NAME}")
+            setRequestProperty("User-Agent", "MP3Player/${BuildConfig.VERSION_NAME}")
         }
 
     private fun File.sha256(): String {

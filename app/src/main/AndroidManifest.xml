@@ -80,7 +80,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="\${applicationId}.update_files"
+            android:authorities="${applicationId}.update_files"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

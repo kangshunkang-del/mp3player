@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "envId": "chuya-d6gyub7awb35a8bf7",
+  "functionRoot": "cloudfunctions",
+  "functions": [
+    {
+      "name": "mp3Update",
+      "runtime": "Nodejs20.19",
+      "handler": "index.main",
+      "timeout": 10,
+      "memorySize": 256,
+      "installDependency": true,
+      "description": "车机 MP3 播放器版本检查与安装包分发"
+    }
+  ]
+}

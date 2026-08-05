@@ -1,0 +1,13 @@
+.git
+.github
+.gradle
+.idea
+.tools
+app/build
+build
+release
+local.properties
+*.iml
+*.apk
+*.jks
+*.keystore
