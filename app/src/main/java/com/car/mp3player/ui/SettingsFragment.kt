@@ -75,11 +75,9 @@ class SettingsFragment : Fragment() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         pendingUpdateApk?.let { apk ->
-            when (updateManager.requestInstall(apk)) {
-                InstallRequest.Launched -> pendingUpdateApk = null
-                is InstallRequest.PermissionRequired ->
-                    Toast.makeText(requireContext(), R.string.settings_update_permission, Toast.LENGTH_LONG).show()
-            }
+            runCatching { updateManager.requestInstall(apk) }
+                .onSuccess { handleInstallRequest(it, canOpenPermissionSettings = false) }
+                .onFailure { showUpdateError(it) }
         }
     }
 
@@ -260,31 +258,19 @@ class SettingsFragment : Fragment() {
         binding.btnCheckUpdate.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching {
-                updateManager.download(info) { progress ->
+                val apk = updateManager.download(info) { progress ->
                     activity?.runOnUiThread {
                         _binding?.btnCheckUpdate?.text =
                             getString(R.string.settings_update_downloading, progress)
                     }
                 }
-            }.onSuccess { apk ->
                 pendingUpdateApk = apk
-                when (val request = updateManager.requestInstall(apk)) {
-                    InstallRequest.Launched -> pendingUpdateApk = null
-                    is InstallRequest.PermissionRequired -> {
-                        Toast.makeText(
-                            requireContext(),
-                            R.string.settings_update_permission,
-                            Toast.LENGTH_LONG,
-                        ).show()
-                        installPermission.launch(request.intent)
-                    }
-                }
+                updateManager.requestInstall(apk)
+            }.onSuccess { request ->
+                handleInstallRequest(request)
             }.onFailure { error ->
                 if (error is CancellationException) throw error
-                binding.updateStatus.text = getString(
-                    R.string.settings_update_failed,
-                    error.message ?: "网络不可用",
-                )
+                showUpdateError(error)
             }
             binding.btnCheckUpdate.isEnabled = true
             binding.btnCheckUpdate.text = if (availableUpdate != null) {
@@ -293,6 +279,34 @@ class SettingsFragment : Fragment() {
                 getString(R.string.settings_update_check)
             }
         }
+    }
+
+    private fun handleInstallRequest(
+        request: InstallRequest,
+        canOpenPermissionSettings: Boolean = true,
+    ) {
+        when (request) {
+            InstallRequest.Launched -> pendingUpdateApk = null
+            is InstallRequest.PermissionRequired -> {
+                Toast.makeText(
+                    requireContext(),
+                    R.string.settings_update_permission,
+                    Toast.LENGTH_LONG,
+                ).show()
+                if (canOpenPermissionSettings) {
+                    installPermission.launch(request.intent)
+                }
+            }
+        }
+    }
+
+    private fun showUpdateError(error: Throwable) {
+        val message = getString(
+            R.string.settings_update_failed,
+            error.message ?: "系统安装器不可用",
+        )
+        _binding?.updateStatus?.text = message
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     private fun setupBootExtraSwitches() {
