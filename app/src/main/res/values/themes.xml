@@ -21,7 +21,20 @@
         <item name="android:textColorPrimary">@color/text_primary</item>
 
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="materialButtonStyle">@style/CarPrimaryButton</item>
 
+    </style>
+
+    <style name="CarPrimaryButton" parent="Widget.MaterialComponents.Button">
+        <item name="cornerRadius">18dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="backgroundTint">@color/netease_red</item>
+        <item name="android:textColor">@color/player_button_icon</item>
     </style>
 
 

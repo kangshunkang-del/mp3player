@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="netease_red">#EC4141</color>
-    <color name="netease_red_dark">#C73535</color>
-    <color name="background">#F5F5F7</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="surface_elevated">#FFFFFF</color>
-    <color name="text_primary">#1F1F1F</color>
-    <color name="text_secondary">#888888</color>
-    <color name="text_hint">#BBBBBB</color>
-    <color name="divider">#14000000</color>
-    <color name="chip_bg">#0FEC4141</color>
-    <color name="playing_highlight">#1AEC4141</color>
-    <color name="karaoke_highlight">#EC4141</color>
-    <color name="karaoke_pending">#661F1F1F</color>
-    <color name="karaoke_next">#44888888</color>
-    <color name="bottom_nav_bg">#FFFFFF</color>
-    <color name="netease_bottom_nav">#F0E8E8</color>
+    <color name="netease_red">#FFB15A</color>
+    <color name="netease_red_dark">#DB8434</color>
+    <color name="background">#0B0E12</color>
+    <color name="surface">#151B22</color>
+    <color name="surface_elevated">#1E2630</color>
+    <color name="text_primary">#F6F1E7</color>
+    <color name="text_secondary">#AAB4C0</color>
+    <color name="text_hint">#727E8C</color>
+    <color name="divider">#34404D</color>
+    <color name="chip_bg">#33FFB15A</color>
+    <color name="playing_highlight">#26FFB15A</color>
+    <color name="karaoke_highlight">#FFB15A</color>
+    <color name="karaoke_pending">#B8F6F1E7</color>
+    <color name="karaoke_next">#73AAB4C0</color>
+    <color name="bottom_nav_bg">#10151B</color>
+    <color name="netease_bottom_nav">#10151B</color>
+    <color name="player_button_icon">#15100A</color>
+    <color name="car_success">#72D6C2</color>
 
     <color name="zelda_primary">#C9A227</color>
     <color name="zelda_primary_dark">#8B6914</color>

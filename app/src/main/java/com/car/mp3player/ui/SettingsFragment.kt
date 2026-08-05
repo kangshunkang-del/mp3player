@@ -14,6 +14,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.car.mp3player.BuildConfig
 import com.car.mp3player.ClusterLyricService
 import com.car.mp3player.LyricsOverlayService
 import com.car.mp3player.R
@@ -24,12 +26,17 @@ import com.car.mp3player.model.AppThemePreset
 import com.car.mp3player.model.LyricFontFamily
 import com.car.mp3player.model.LyricThemePreset
 import com.car.mp3player.model.ThemeMode
+import com.car.mp3player.update.AppUpdateInfo
+import com.car.mp3player.update.AppUpdateManager
+import com.car.mp3player.update.InstallRequest
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
+import java.io.File
+import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
@@ -42,6 +49,9 @@ class SettingsFragment : Fragment() {
     private var switchOverlayBold: SwitchMaterial? = null
     private var switchOverlayStroke: SwitchMaterial? = null
     private var overlayStrokeWidthSlider: Slider? = null
+    private lateinit var updateManager: AppUpdateManager
+    private var pendingUpdateApk: File? = null
+    private var availableUpdate: AppUpdateInfo? = null
 
     private val overlayPermission = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -60,6 +70,18 @@ class SettingsFragment : Fragment() {
         Toast.makeText(requireContext(), R.string.folder_added, Toast.LENGTH_SHORT).show()
     }
 
+    private val installPermission = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        pendingUpdateApk?.let { apk ->
+            when (updateManager.requestInstall(apk)) {
+                InstallRequest.Launched -> pendingUpdateApk = null
+                is InstallRequest.PermissionRequired ->
+                    Toast.makeText(requireContext(), R.string.settings_update_permission, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
@@ -68,6 +90,12 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settings = SettingsRepository(requireContext())
+        updateManager = AppUpdateManager(requireContext().applicationContext)
+        binding.updateStatus.text = getString(R.string.settings_update_current, BuildConfig.VERSION_NAME)
+        binding.btnCheckUpdate.setOnClickListener {
+            val update = availableUpdate
+            if (update == null) checkForUpdate() else downloadAndInstall(update)
+        }
         binding.switchAutoResume.isChecked = settings.autoResumePlayback
         binding.switchBootAutoStart.isChecked = settings.bootAutoStart
         setupBootExtraSwitches()
@@ -197,6 +225,71 @@ class SettingsFragment : Fragment() {
         }
 
         AppThemeManager.applyFragmentRoot(binding.root, AppThemeManager.palette(requireContext(), settings))
+    }
+
+    private fun checkForUpdate() {
+        binding.btnCheckUpdate.isEnabled = false
+        binding.btnCheckUpdate.text = getString(R.string.settings_update_checking)
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching { updateManager.check() }
+                .onSuccess { info ->
+                    if (info.isNewer) {
+                        availableUpdate = info
+                        binding.updateStatus.text = getString(R.string.settings_update_ready, info.version)
+                        binding.btnCheckUpdate.text = getString(R.string.settings_update_install)
+                    } else {
+                        availableUpdate = null
+                        binding.updateStatus.text = getString(R.string.settings_update_latest)
+                        binding.btnCheckUpdate.text = getString(R.string.settings_update_check)
+                    }
+                }
+                .onFailure { error ->
+                    binding.updateStatus.text = getString(
+                        R.string.settings_update_failed,
+                        error.message ?: "网络不可用",
+                    )
+                    binding.btnCheckUpdate.text = getString(R.string.settings_update_check)
+                }
+            binding.btnCheckUpdate.isEnabled = true
+        }
+    }
+
+    private fun downloadAndInstall(info: AppUpdateInfo) {
+        binding.btnCheckUpdate.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                updateManager.download(info) { progress ->
+                    activity?.runOnUiThread {
+                        _binding?.btnCheckUpdate?.text =
+                            getString(R.string.settings_update_downloading, progress)
+                    }
+                }
+            }.onSuccess { apk ->
+                pendingUpdateApk = apk
+                when (val request = updateManager.requestInstall(apk)) {
+                    InstallRequest.Launched -> pendingUpdateApk = null
+                    is InstallRequest.PermissionRequired -> {
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.settings_update_permission,
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        installPermission.launch(request.intent)
+                    }
+                }
+            }.onFailure { error ->
+                binding.updateStatus.text = getString(
+                    R.string.settings_update_failed,
+                    error.message ?: "网络不可用",
+                )
+            }
+            binding.btnCheckUpdate.isEnabled = true
+            binding.btnCheckUpdate.text = if (availableUpdate != null) {
+                getString(R.string.settings_update_install)
+            } else {
+                getString(R.string.settings_update_check)
+            }
+        }
     }
 
     private fun setupBootExtraSwitches() {

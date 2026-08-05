@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.ComponentName
 import android.content.Intent
 import android.media.AudioAttributes
@@ -13,8 +12,8 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -22,6 +21,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
 import com.car.mp3player.data.OnlineMusicApi
 import com.car.mp3player.data.PlaylistCache
@@ -33,6 +33,7 @@ import com.car.mp3player.model.LibraryKind
 import com.car.mp3player.model.PlaybackMode
 import com.car.mp3player.model.Song
 import com.car.mp3player.playback.CarPlaylistPlayer
+import com.car.mp3player.playback.MediaControlRecoveryPolicy
 import com.car.mp3player.playback.PlaybackStateHolder
 import com.car.mp3player.util.MediaPath
 import java.io.File
@@ -45,7 +46,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MusicPlaybackService : Service() {
+class MusicPlaybackService : MediaSessionService() {
     private var exoPlayer: ExoPlayer? = null
     private var sessionPlayer: CarPlaylistPlayer? = null
     private var mediaSession: MediaSession? = null
@@ -76,6 +77,7 @@ class MusicPlaybackService : Service() {
     private var foregroundStarted = false
     private var playlistJob: Job? = null
     private val mediaButtonReceiver by lazy { ComponentName(this, CarMediaButtonReceiver::class.java) }
+    private val mediaControlRecovery = MediaControlRecoveryPolicy()
 
     private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { focus ->
         val player = exoPlayer ?: return@OnAudioFocusChangeListener
@@ -110,6 +112,14 @@ class MusicPlaybackService : Service() {
             if (p.isPlaying && saveTick % 50 == 0) {
                 acquireAudioFocus()
             }
+            if (mediaControlRecovery.shouldRecover(
+                    nowMs = SystemClock.elapsedRealtime(),
+                    isPlaying = p.isPlaying,
+                    sessionReady = mediaSession != null,
+                )
+            ) {
+                reassertMediaControl()
+            }
             handler.postDelayed(this, 120L)
         }
     }
@@ -137,6 +147,15 @@ class MusicPlaybackService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val media3Result = super.onStartCommand(intent, flags, startId)
+        if (intent?.action == Intent.ACTION_MEDIA_BUTTON) {
+            reassertMediaControl()
+            return if (playlist.isNotEmpty() || PlaybackStateHolder.songs.isNotEmpty()) {
+                START_STICKY
+            } else {
+                media3Result
+            }
+        }
         return runCatching { handleStartCommand(intent) }.onFailure {
             android.util.Log.e(TAG, "onStartCommand failed", it)
             stopSelfSafely()
@@ -399,6 +418,7 @@ class MusicPlaybackService : Service() {
             lastClusterMetadataKey = ""
             PlaybackStateHolder.setCoverArt(null)
             currentLines = loadLocalLyrics(song)
+            claimMediaControl()
             ensureForeground()
             updateNotification(song)
             handler.removeCallbacks(progressRunnable)
@@ -406,7 +426,6 @@ class MusicPlaybackService : Service() {
             persistProgress(song, seekMs)
             PlaybackStateHolder.update(song, true, seekMs, currentLines, player.duration.coerceAtLeast(0L))
             updateClusterMetadata(song, seekMs)
-            claimMediaControl()
             handler.post {
                 runCatching { LyricsOverlayService.start(applicationContext) }
                 LyricsOverlayService.updateLyrics(applicationContext, PlaybackStateHolder.lyricState)
@@ -457,8 +476,13 @@ class MusicPlaybackService : Service() {
 
     private fun claimMediaControl() {
         acquireAudioFocus()
-        registerMediaButtonReceiver()
         ensureMediaSession()
+        reassertMediaControl()
+    }
+
+    private fun reassertMediaControl() {
+        ensureMediaSession()
+        registerMediaButtonReceiver()
     }
 
     private fun registerMediaButtonReceiver() {
@@ -497,6 +521,11 @@ class MusicPlaybackService : Service() {
         }.onFailure {
             android.util.Log.e(TAG, "MediaSession create failed", it)
         }
+    }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        ensureMediaSession()
+        return mediaSession
     }
 
     private fun releaseMediaSession() {
@@ -701,6 +730,7 @@ class MusicPlaybackService : Service() {
 
     private fun updateClusterMetadata(song: Song?, positionMs: Long) {
         if (song == null) return
+        if (!settings.clusterLyricsEnabled) return
         val lyricLine = LrcParser.findState(currentLines, positionMs).currentLine?.text
         val subtitle = lyricLine?.takeIf { it.isNotBlank() } ?: song.artist
         val key = "${song.path}|$subtitle"
@@ -740,10 +770,9 @@ class MusicPlaybackService : Service() {
         runCatching { exoPlayer?.release() }
         exoPlayer = null
         foregroundStarted = false
+        mediaControlRecovery.reset()
         super.onDestroy()
     }
-
-    override fun onBind(intent: Intent?): IBinder? = null
 
     @Suppress("DEPRECATION")
     private fun readPlaylist(intent: Intent): ArrayList<SongParcelable>? {

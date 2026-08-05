@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MP3播放器</string>
-    <string name="nav_playlist">播放列表</string>
-    <string name="nav_player">播放</string>
+    <string name="nav_playlist">曲库</string>
+    <string name="nav_player">正在播放</string>
     <string name="nav_settings">设置</string>
+    <string name="settings_update_title">应用更新</string>
+    <string name="settings_update_current">当前版本 %1$s · 可直接在车机上更新</string>
+    <string name="settings_update_ready">发现新版本 %1$s</string>
+    <string name="settings_update_latest">已经是最新版本</string>
+    <string name="settings_update_check">检查更新</string>
+    <string name="settings_update_install">下载并安装</string>
+    <string name="settings_update_checking">正在检查…</string>
+    <string name="settings_update_downloading">正在下载 %1$d%%</string>
+    <string name="settings_update_failed">更新失败：%1$s</string>
+    <string name="settings_update_permission">请允许安装未知应用，返回后会继续安装</string>
     <string name="section_local">本地</string>
     <string name="section_online">在线</string>
     <string name="section_radio">电台</string>

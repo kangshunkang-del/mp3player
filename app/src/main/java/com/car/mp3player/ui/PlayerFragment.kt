@@ -60,6 +60,7 @@ class PlayerFragment : Fragment(), PlaybackStateHolder.Listener {
         binding.btnNext.setOnClickListener { sendAction(MusicPlaybackService.ACTION_NEXT) }
         binding.btnPrev.setOnClickListener { sendAction(MusicPlaybackService.ACTION_PREV) }
         binding.btnMode.setOnClickListener { toggleMode() }
+        binding.btnLyrics.setOnClickListener { toggleLyricsView() }
 
         binding.progressSlider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
             override fun onStartTrackingTouch(slider: Slider) {
@@ -81,7 +82,10 @@ class PlayerFragment : Fragment(), PlaybackStateHolder.Listener {
             true
         }
 
-        applyLayoutMode(PlayerLayoutMode.CENTER, animate = false)
+        applyLayoutMode(
+            if (isLandscape()) PlayerLayoutMode.VINYL_LEFT else PlayerLayoutMode.CENTER,
+            animate = false,
+        )
         renderState()
         renderCover(PlaybackStateHolder.coverArtPath)
         updateProgressUi(PlaybackStateHolder.positionMs, PlaybackStateHolder.durationMs)
@@ -103,6 +107,17 @@ class PlayerFragment : Fragment(), PlaybackStateHolder.Listener {
         binding.playerStage.setOnTouchListener { _, event ->
             stageTapDetector?.onTouchEvent(event) ?: false
         }
+    }
+
+    private fun toggleLyricsView() {
+        val next = if (isLandscape()) {
+            if (layoutMode == PlayerLayoutMode.CENTER) PlayerLayoutMode.VINYL_LEFT
+            else PlayerLayoutMode.CENTER
+        } else {
+            if (layoutMode == PlayerLayoutMode.LYRICS_FULL) PlayerLayoutMode.CENTER
+            else PlayerLayoutMode.LYRICS_FULL
+        }
+        applyLayoutMode(next, animate = true)
     }
 
     override fun onResume() {

@@ -5,10 +5,10 @@
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
-    android:minHeight="64dp"
+    android:minHeight="76dp"
     android:orientation="horizontal"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="10dp">
+    android:paddingHorizontal="18dp"
+    android:paddingVertical="12dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -23,7 +23,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             tools:text="晴天" />
 
@@ -35,7 +35,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/text_secondary"
-            android:textSize="13sp"
+            android:textSize="14sp"
             tools:text="周杰伦" />
     </LinearLayout>
 
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:textColor="@color/text_secondary"
-        android:textSize="12sp"
+        android:textSize="14sp"
         tools:text="4:05" />
 
     <TextView
@@ -58,7 +58,7 @@
         android:paddingVertical="4dp"
         android:text="@string/has_lrc"
         android:textColor="@color/netease_red"
-        android:textSize="11sp"
+        android:textSize="12sp"
         android:visibility="gone" />
 
     <TextView
@@ -68,7 +68,7 @@
         android:layout_marginStart="8dp"
         android:text="@string/playing_now"
         android:textColor="@color/netease_red"
-        android:textSize="12sp"
+        android:textSize="13sp"
         android:visibility="gone" />
 
 </LinearLayout>

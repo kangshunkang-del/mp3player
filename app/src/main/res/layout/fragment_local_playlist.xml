@@ -11,20 +11,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
-        android:minHeight="48dp"
+        android:minHeight="64dp"
+        android:paddingHorizontal="8dp"
         app:title="@string/section_local"
         app:titleTextColor="@color/text_primary" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="2dp"
         app:boxBackgroundColor="@color/surface"
-        app:boxCornerRadiusBottomEnd="16dp"
-        app:boxCornerRadiusBottomStart="16dp"
-        app:boxCornerRadiusTopEnd="16dp"
-        app:boxCornerRadiusTopStart="16dp"
+        app:boxCornerRadiusBottomEnd="20dp"
+        app:boxCornerRadiusBottomStart="20dp"
+        app:boxCornerRadiusTopEnd="20dp"
+        app:boxCornerRadiusTopStart="20dp"
         app:boxStrokeColor="@color/netease_red"
         app:hintEnabled="false"
         app:startIconDrawable="@android:drawable/ic_menu_search">
@@ -32,7 +33,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/searchInput"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:hint="@string/search_hint"
             android:imeOptions="actionSearch"
             android:inputType="text"
@@ -43,8 +44,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -54,6 +55,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
+            android:minHeight="48dp"
             android:text="@string/filter_all"
             app:chipBackgroundColor="@color/chip_bg"
             app:chipStrokeColor="@color/netease_red"
@@ -65,6 +67,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:minHeight="48dp"
             android:text="@string/filter_artists"
             app:chipBackgroundColor="@color/chip_bg"
             app:chipStrokeColor="@color/netease_red"
@@ -75,7 +78,7 @@
         android:id="@+id/sortGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
+        android:layout_marginHorizontal="20dp"
         android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
@@ -84,6 +87,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
+            android:minHeight="48dp"
             android:text="@string/sort_title"
             android:textColor="@color/text_primary" />
 
@@ -91,6 +95,7 @@
             android:id="@+id/sortDurationAsc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/sort_duration_asc"
             android:textColor="@color/text_primary" />
 
@@ -98,6 +103,7 @@
             android:id="@+id/sortDurationDesc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/sort_duration_desc"
             android:textColor="@color/text_primary" />
     </RadioGroup>
@@ -106,7 +112,7 @@
         android:id="@+id/songCountText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
+        android:layout_marginHorizontal="20dp"
         android:layout_marginTop="4dp"
         android:gravity="end"
         android:textColor="@color/text_secondary"
@@ -119,7 +125,8 @@
         android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="12dp" />
+        android:paddingHorizontal="12dp"
+        android:paddingBottom="20dp" />
 
     <TextView
         android:id="@+id/emptyText"

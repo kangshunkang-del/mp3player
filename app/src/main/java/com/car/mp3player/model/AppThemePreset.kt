@@ -7,9 +7,9 @@ enum class AppThemePreset(
     val displayName: String,
     val styleRes: Int
 ) {
-    NETEASE("netease", "网易云", R.style.Theme_MP3Player),
-    ZELDA("zelda", "塞尔达", R.style.Theme_MP3Player_Zelda),
-    MARIO("mario", "马里奥", R.style.Theme_MP3Player_Mario);
+    NETEASE("netease", "夜航", R.style.Theme_MP3Player),
+    ZELDA("zelda", "林野", R.style.Theme_MP3Player_Zelda),
+    MARIO("mario", "赛道", R.style.Theme_MP3Player_Mario);
 
     companion object {
         fun fromId(id: String): AppThemePreset =

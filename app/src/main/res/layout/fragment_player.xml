@@ -18,25 +18,35 @@
             android:id="@+id/header"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:gravity="start"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="20dp"
-            android:paddingBottom="8dp"
+            android:paddingHorizontal="28dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/now_playing"
+                android:textAllCaps="true"
+                android:textColor="@color/netease_red"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/songTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
-                android:gravity="center"
+                android:layout_marginTop="5dp"
+                android:gravity="start"
                 android:marqueeRepeatLimit="marquee_forever"
                 android:singleLine="true"
                 android:textColor="#F5FFFFFF"
-                android:textSize="22sp"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -44,10 +54,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:gravity="center"
+                android:gravity="start"
                 android:singleLine="true"
                 android:textColor="#CCFFFFFF"
-                android:textSize="15sp" />
+                android:textSize="16sp" />
         </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -66,13 +76,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintGuide_percent="0.5" />
+                app:layout_constraintGuide_percent="0.42" />
 
             <com.car.mp3player.ui.VinylRecordView
                 android:id="@+id/vinylRecord"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:contentDescription="@string/tap_toggle_lyrics"
+                android:padding="14dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -82,8 +93,8 @@
                 android:id="@+id/scrollLyricView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp"
+                android:paddingHorizontal="22dp"
+                android:paddingVertical="16dp"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -97,9 +108,9 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_control_panel"
             android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="20dp"
-            android:paddingBottom="22dp"
+            android:paddingHorizontal="26dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -110,9 +121,9 @@
                 android:layout_height="wrap_content"
                 android:valueFrom="0"
                 android:valueTo="100"
-                app:thumbColor="#F5FFFFFF"
-                app:trackColorActive="#F5FFFFFF"
-                app:trackColorInactive="#44FFFFFF" />
+                app:thumbColor="@color/netease_red"
+                app:trackColorActive="@color/netease_red"
+                app:trackColorInactive="#3DFFFFFF" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -127,7 +138,7 @@
                     android:layout_weight="1"
                     android:text="0:00"
                     android:textColor="#AAFFFFFF"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/timeTotal"
@@ -136,7 +147,7 @@
                     android:gravity="end"
                     android:text="0:00"
                     android:textColor="#AAFFFFFF"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -148,8 +159,8 @@
 
                 <ImageButton
                     android:id="@+id/btnMode"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/mode_order"
                     android:src="@drawable/ic_mode_order"
@@ -157,9 +168,9 @@
 
                 <ImageButton
                     android:id="@+id/btnPrev"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:layout_marginStart="12dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/prev"
                     android:src="@drawable/ic_skip_previous"
@@ -167,29 +178,34 @@
 
                 <ImageButton
                     android:id="@+id/btnPlayPause"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginHorizontal="14dp"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:layout_marginHorizontal="18dp"
                     android:background="@drawable/bg_play_button"
                     android:contentDescription="@string/play"
-                    android:padding="14dp"
+                    android:padding="19dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_play"
-                    app:tint="#F5FFFFFF" />
+                    app:tint="@color/player_button_icon" />
 
                 <ImageButton
                     android:id="@+id/btnNext"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:layout_marginEnd="12dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/next"
                     android:src="@drawable/ic_skip_next"
                     app:tint="#F0FFFFFF" />
 
-                <View
-                    android:layout_width="40dp"
-                    android:layout_height="40dp" />
+                <ImageButton
+                    android:id="@+id/btnLyrics"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/tap_toggle_lyrics"
+                    android:src="@drawable/ic_lyrics"
+                    app:tint="#F0FFFFFF" />
             </LinearLayout>
 
             <TextView
@@ -198,9 +214,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="4dp"
+                android:background="@drawable/bg_mode_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
                 android:text="@string/mode_order"
                 android:textColor="#99FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
