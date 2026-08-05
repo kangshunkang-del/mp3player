@@ -19,19 +19,19 @@
     <color name="player_button_icon">#15100A</color>
     <color name="car_success">#72D6C2</color>
 
-    <color name="zelda_primary">#C9A227</color>
-    <color name="zelda_primary_dark">#8B6914</color>
-    <color name="zelda_background">#1A2E1A</color>
-    <color name="zelda_surface">#243824</color>
-    <color name="zelda_text_primary">#F0EAD6</color>
-    <color name="zelda_text_secondary">#A8B89A</color>
-    <color name="zelda_bottom_nav">#1E3220</color>
+    <color name="zelda_primary">#D5B56B</color>
+    <color name="zelda_primary_dark">#A58443</color>
+    <color name="zelda_background">#0D1713</color>
+    <color name="zelda_surface">#16241D</color>
+    <color name="zelda_text_primary">#EFF3EA</color>
+    <color name="zelda_text_secondary">#A3B1A7</color>
+    <color name="zelda_bottom_nav">#101B16</color>
 
-    <color name="mario_primary">#E52521</color>
-    <color name="mario_primary_dark">#B81C18</color>
-    <color name="mario_background">#5C94FC</color>
-    <color name="mario_surface">#4A7FD4</color>
-    <color name="mario_text_primary">#FFFFFF</color>
-    <color name="mario_text_secondary">#D6E8FF</color>
-    <color name="mario_bottom_nav">#3D6BB8</color>
+    <color name="mario_primary">#F05A47</color>
+    <color name="mario_primary_dark">#C53A2C</color>
+    <color name="mario_background">#111317</color>
+    <color name="mario_surface">#1B1F25</color>
+    <color name="mario_text_primary">#F4F5F7</color>
+    <color name="mario_text_secondary">#AEB6C2</color>
+    <color name="mario_bottom_nav">#15191F</color>
 </resources>

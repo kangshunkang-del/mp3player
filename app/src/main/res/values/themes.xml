@@ -10,7 +10,7 @@
 
         <item name="colorSecondary">@color/netease_red</item>
 
-        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorOnPrimary">@color/player_button_icon</item>
 
         <item name="android:statusBarColor">@color/background</item>
 
@@ -33,8 +33,8 @@
         <item name="android:minHeight">52dp</item>
         <item name="android:textSize">15sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="backgroundTint">@color/netease_red</item>
-        <item name="android:textColor">@color/player_button_icon</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
     </style>
 
 
@@ -59,6 +59,14 @@
 
         <item name="android:textColorSecondary">@color/zelda_text_secondary</item>
 
+        <item name="android:fontFamily">sans</item>
+
+        <item name="android:windowLightStatusBar">false</item>
+
+        <item name="android:windowLightNavigationBar">false</item>
+
+        <item name="materialButtonStyle">@style/CarPrimaryButton</item>
+
     </style>
 
 
@@ -82,6 +90,14 @@
         <item name="android:textColorPrimary">@color/mario_text_primary</item>
 
         <item name="android:textColorSecondary">@color/mario_text_secondary</item>
+
+        <item name="android:fontFamily">sans</item>
+
+        <item name="android:windowLightStatusBar">false</item>
+
+        <item name="android:windowLightNavigationBar">false</item>
+
+        <item name="materialButtonStyle">@style/CarPrimaryButton</item>
 
     </style>
 
