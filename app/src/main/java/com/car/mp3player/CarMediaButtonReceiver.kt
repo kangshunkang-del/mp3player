@@ -25,29 +25,29 @@ class CarMediaButtonReceiver : BroadcastReceiver() {
         } ?: return
 
         val action = when (keyEvent.keyCode) {
-                KeyEvent.KEYCODE_MEDIA_NEXT -> MusicPlaybackService.ACTION_NEXT
-                KeyEvent.KEYCODE_MEDIA_PREVIOUS -> MusicPlaybackService.ACTION_PREV
-                KeyEvent.KEYCODE_MEDIA_PLAY,
-                KeyEvent.KEYCODE_MEDIA_PAUSE,
-                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
-                KeyEvent.KEYCODE_HEADSETHOOK,
-                KeyEvent.KEYCODE_MEDIA_STOP -> MusicPlaybackService.ACTION_TOGGLE
-                else -> null
-            }
+            KeyEvent.KEYCODE_MEDIA_NEXT -> MusicPlaybackService.ACTION_NEXT
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS -> MusicPlaybackService.ACTION_PREV
+            KeyEvent.KEYCODE_MEDIA_PLAY -> MusicPlaybackService.ACTION_PLAY
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> MusicPlaybackService.ACTION_PAUSE
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+            KeyEvent.KEYCODE_HEADSETHOOK -> MusicPlaybackService.ACTION_TOGGLE
+            KeyEvent.KEYCODE_MEDIA_STOP -> MusicPlaybackService.ACTION_STOP
+            else -> null
+        }
         if (keyEvent.action == KeyEvent.ACTION_DOWN && action != null) {
+            runCatching {
+                ContextCompat.startForegroundService(
+                    context,
+                    Intent(context, MusicPlaybackService::class.java).apply { this.action = action }
+                )
+            }.onFailure {
+                // Some head units deny background FGS starts. Fall back to startService.
                 runCatching {
-                    ContextCompat.startForegroundService(
-                        context,
+                    context.startService(
                         Intent(context, MusicPlaybackService::class.java).apply { this.action = action }
                     )
-                }.onFailure {
-                    // Some head units deny background FGS starts. Fall back to startService.
-                    runCatching {
-                        context.startService(
-                            Intent(context, MusicPlaybackService::class.java).apply { this.action = action }
-                        )
-                    }
                 }
+            }
         }
         if (isOrderedBroadcast) {
             abortBroadcast()

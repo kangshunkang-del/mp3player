@@ -210,6 +210,17 @@ class MusicPlaybackService : MediaSessionService() {
                     togglePlayPause()
                 }
             }
+            ACTION_PLAY -> {
+                if (playlist.isEmpty()) {
+                    runWithPlaylist(null) { list ->
+                        if (list.isEmpty()) return@runWithPlaylist
+                        startFromCachedQueue(list, resume = true)
+                    }
+                } else {
+                    setPlaybackState(shouldPlay = true)
+                }
+            }
+            ACTION_PAUSE -> setPlaybackState(shouldPlay = false)
             ACTION_NEXT -> {
                 if (playlist.isEmpty()) {
                     runWithPlaylist(null) { list ->
@@ -649,21 +660,26 @@ class MusicPlaybackService : MediaSessionService() {
     }
 
     private fun togglePlayPause() {
+        val p = exoPlayer ?: return
+        setPlaybackState(shouldPlay = p.mediaItemCount <= 0 || !p.isPlaying)
+    }
+
+    private fun setPlaybackState(shouldPlay: Boolean) {
         runCatching {
             val p = exoPlayer ?: return@runCatching
             if (p.mediaItemCount <= 0) {
-                if (playlist.isNotEmpty()) {
+                if (shouldPlay && playlist.isNotEmpty()) {
                     playSongAt(currentIndex.coerceIn(0, playlist.lastIndex))
                 }
                 return@runCatching
             }
-            if (p.isPlaying) p.pause() else p.play()
+            if (shouldPlay) p.play() else p.pause()
             val song = playlist.getOrNull(currentIndex)
             updateNotification(song)
             PlaybackStateHolder.update(song, p.isPlaying, p.currentPosition, currentLines, p.duration.coerceAtLeast(0L))
             persistProgress(song, p.currentPosition)
         }.onFailure {
-            android.util.Log.e(TAG, "togglePlayPause failed", it)
+            android.util.Log.e(TAG, "setPlaybackState failed", it)
         }
     }
 
@@ -826,6 +842,8 @@ class MusicPlaybackService : MediaSessionService() {
     companion object {
         const val ACTION_PLAY_INDEX = "play_index"
         const val ACTION_TOGGLE = "toggle"
+        const val ACTION_PLAY = "play"
+        const val ACTION_PAUSE = "pause"
         const val ACTION_NEXT = "next"
         const val ACTION_PREV = "prev"
         const val ACTION_SET_MODE = "set_mode"
@@ -844,7 +862,8 @@ class MusicPlaybackService : MediaSessionService() {
         private const val NOTIFICATION_ID = 1001
         private const val TAG = "MusicPlaybackService"
         private val MEDIA_CONTROL_ACTIONS = setOf(
-            ACTION_PLAY_INDEX, ACTION_TOGGLE, ACTION_NEXT, ACTION_PREV, ACTION_RESUME
+            ACTION_PLAY_INDEX, ACTION_TOGGLE, ACTION_PLAY, ACTION_PAUSE,
+            ACTION_NEXT, ACTION_PREV, ACTION_RESUME
         )
     }
 }
