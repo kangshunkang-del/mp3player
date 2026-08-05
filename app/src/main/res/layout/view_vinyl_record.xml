@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <FrameLayout
+        android:id="@+id/vinylRotateGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <ImageView
+            android:id="@+id/vinylDisc"
+            android:layout_width="280dp"
+            android:layout_height="280dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/album_cover"
+            android:src="@drawable/bg_vinyl_disc" />
+
+        <ImageView
+            android:id="@+id/vinylCover"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/album_cover"
+            android:scaleType="centerCrop"
+            android:src="@drawable/bg_album_placeholder" />
+
+    </FrameLayout>
+
+</FrameLayout>

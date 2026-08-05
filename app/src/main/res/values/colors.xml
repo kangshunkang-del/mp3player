@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="netease_red">#EC4141</color>
+    <color name="netease_red_dark">#C73535</color>
+    <color name="background">#F5F5F7</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="text_primary">#1F1F1F</color>
+    <color name="text_secondary">#888888</color>
+    <color name="text_hint">#BBBBBB</color>
+    <color name="divider">#14000000</color>
+    <color name="chip_bg">#0FEC4141</color>
+    <color name="playing_highlight">#1AEC4141</color>
+    <color name="karaoke_highlight">#EC4141</color>
+    <color name="karaoke_pending">#661F1F1F</color>
+    <color name="karaoke_next">#44888888</color>
+    <color name="bottom_nav_bg">#FFFFFF</color>
+    <color name="netease_bottom_nav">#F0E8E8</color>
+
+    <color name="zelda_primary">#C9A227</color>
+    <color name="zelda_primary_dark">#8B6914</color>
+    <color name="zelda_background">#1A2E1A</color>
+    <color name="zelda_surface">#243824</color>
+    <color name="zelda_text_primary">#F0EAD6</color>
+    <color name="zelda_text_secondary">#A8B89A</color>
+    <color name="zelda_bottom_nav">#1E3220</color>
+
+    <color name="mario_primary">#E52521</color>
+    <color name="mario_primary_dark">#B81C18</color>
+    <color name="mario_background">#5C94FC</color>
+    <color name="mario_surface">#4A7FD4</color>
+    <color name="mario_text_primary">#FFFFFF</color>
+    <color name="mario_text_secondary">#D6E8FF</color>
+    <color name="mario_bottom_nav">#3D6BB8</color>
+</resources>
