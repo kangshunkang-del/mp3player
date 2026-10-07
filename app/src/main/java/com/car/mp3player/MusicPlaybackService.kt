@@ -434,7 +434,13 @@ class MusicPlaybackService : MediaSessionService() {
 
             lastClusterMetadataKey = ""
             PlaybackStateHolder.setCoverArt(null)
-            currentLines = loadLocalLyrics(song)
+            // Online-enabled playback verifies the lyric match before displaying
+            // a cached sidecar, preventing an old wrong .lrc from flashing first.
+            currentLines = if (settings.onlineLyricsEnabled) {
+                emptyList()
+            } else {
+                loadLocalLyrics(song)
+            }
             claimMediaControl()
             ensureForeground()
             updateNotification(song)
@@ -624,12 +630,10 @@ class MusicPlaybackService : MediaSessionService() {
                 }
             }
 
-            val localLines = metadataLoader.readLocalLyrics(song)
-            val result = if (!localLines.isNullOrEmpty()) {
-                SongMetadataLoader.LyricLoadResult(localLines, song.lrcPath)
-            } else {
-                metadataLoader.loadLyrics(song)
-            } ?: return@launch
+            // Always go through the metadata loader here. When online lyrics
+            // are enabled it verifies the track with the scored providers first,
+            // then falls back to the local .lrc if the network is unavailable.
+            val result = metadataLoader.loadLyrics(song) ?: return@launch
 
             if (playlist.getOrNull(currentIndex)?.path != song.path) return@launch
             result.lrcPath?.let { persistSongLrcPath(song.path, it) }
