@@ -69,7 +69,10 @@ class OnlineLyricFetcher {
             bestSynced = synced
         }
 
-        return bestSynced?.let { LrcParser.parseContent(it).takeIf { lines -> lines.isNotEmpty() } }
+        return bestSynced?.let { text ->
+            LrcParser.parseContent(text).takeIf { lines -> lines.isNotEmpty() }
+                ?.let { lines -> ScoredLyrics(lines, bestScore) }
+        }
     }
 
     private fun fetchLrcLibGet(title: String, artist: String, durationMs: Long): ScoredLyrics? {
@@ -86,7 +89,10 @@ class OnlineLyricFetcher {
         val item = runCatching { JSONObject(body) }.getOrNull() ?: return null
         if (item.optInt("code", 0) == 404) return null
         val synced = item.optString("syncedLyrics").takeIf { it.isNotBlank() } ?: return null
+        val score = scoreLrcLibResult(item, title, artist, durationMs)
+        if (score < minimumAcceptableScore(artist)) return null
         return LrcParser.parseContent(synced).takeIf { it.isNotEmpty() }
+            ?.let { lines -> ScoredLyrics(lines, score) }
     }
 
     private fun searchLrcLib(title: String, artist: String, durationMs: Long): JSONArray? {
@@ -127,14 +133,16 @@ class OnlineLyricFetcher {
                 bestId = song.optLong("id")
             }
         }
-        if (bestId <= 0L || bestScore < 3) return null
+        if (bestId <= 0L || bestScore < minimumAcceptableScore(artist)) return null
 
         val lyricUrl = "https://music.163.com/api/song/lyric?id=$bestId&lv=1&kv=1&tv=-1"
         val lyricJson = httpGetText(lyricUrl, headers)?.let { runCatching { JSONObject(it) }.getOrNull() }
             ?: return null
         val synced = lyricJson.optJSONObject("lrc")?.optString("lyric")?.takeIf { it.isNotBlank() }
         val plain = lyricJson.optJSONObject("tlyric")?.optString("lyric")?.takeIf { it.isNotBlank() }
-        return parseLyricText(synced, plain)
+        return parseLyricText(synced, plain)?.let { lines ->
+            ScoredLyrics(lines, bestScore + if (synced != null) 5 else 0)
+        }
     }
 
     private fun fetchFromKugou(title: String, artist: String, durationMs: Long): ScoredLyrics? {
@@ -162,7 +170,7 @@ class OnlineLyricFetcher {
             }
         }
         val hash = bestHash ?: return null
-        if (bestScore < 3) return null
+        if (bestScore < minimumAcceptableScore(artist)) return null
 
         val searchLyricUrl =
             "https://lyrics.kugou.com/search?ver=1&man=yes&client=pc&hash=$hash&album_audio_id=$bestAlbumAudioId"
@@ -182,6 +190,7 @@ class OnlineLyricFetcher {
             String(android.util.Base64.decode(content, android.util.Base64.DEFAULT), Charsets.UTF_8)
         }.getOrDefault(content)
         return LrcParser.parseContent(decoded).takeIf { it.isNotEmpty() }
+            ?.let { lines -> ScoredLyrics(lines, bestScore + 4) }
     }
 
     private fun fetchFromQqMusic(title: String, artist: String, durationMs: Long): ScoredLyrics? {
@@ -219,13 +228,14 @@ class OnlineLyricFetcher {
                 bestSongId = song.optLong("songid")
             }
         }
-        if (bestSongId <= 0L || bestScore < 3) return null
+        if (bestSongId <= 0L || bestScore < minimumAcceptableScore(artist)) return null
 
         val lyricUrl =
             "https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?format=json&nobase64=1&songtype=0&musicid=$bestSongId"
         val lyricJson = httpGetText(lyricUrl, headers)?.let { parseJsonBody(it) } ?: return null
         val lyricText = lyricJson.optString("lyric").takeIf { it.isNotBlank() } ?: return null
         return LrcParser.parseContent(lyricText).takeIf { it.isNotEmpty() }
+            ?.let { lines -> ScoredLyrics(lines, bestScore + 4) }
     }
 
     private fun fetchFromLyricsOvh(title: String, artist: String): List<LrcLine>? {
