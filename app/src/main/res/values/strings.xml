@@ -21,6 +21,8 @@
     <string name="search_hint">搜索歌曲或歌手</string>
     <string name="filter_all">全部歌曲</string>
     <string name="filter_artists">歌手</string>
+    <string name="filter_folders">文件夹</string>
+    <string name="folder_count">共 %d 个文件夹</string>
     <string name="artist_count">共 %d 位歌手</string>
     <string name="artist_song_count">%d 首</string>
     <string name="sort_title">歌名</string>
