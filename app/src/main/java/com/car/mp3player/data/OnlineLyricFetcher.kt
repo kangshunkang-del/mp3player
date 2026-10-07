@@ -32,7 +32,7 @@ class OnlineLyricFetcher {
     }
 
     private fun minimumAcceptableScore(artist: String): Int =
-        if (isUsefulArtist(artist)) 38 else 27
+        if (isUsefulArtist(artist)) 43 else 27
 
     private fun buildSearchQueries(title: String, artist: String): List<Pair<String, String>> {
         val result = mutableListOf<Pair<String, String>>()
@@ -43,7 +43,7 @@ class OnlineLyricFetcher {
         val validArtist = isUsefulArtist(cleanArtist)
         if (cleanTitle.isNotBlank()) {
             result += cleanTitle to cleanArtist
-            result += cleanTitle to ""
+            if (!validArtist) result += cleanTitle to ""
             if (validArtist) result += cleanTitle to cleanArtist.substringBefore(" feat")
             result += normalizeTitle(cleanTitle) to if (validArtist) cleanArtist else ""
         }
