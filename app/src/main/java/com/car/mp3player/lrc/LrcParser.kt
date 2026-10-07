@@ -7,6 +7,7 @@ import java.util.regex.Pattern
 
 object LrcParser {
     private val TAG_PATTERN = Pattern.compile("\\[(\\d{2}):(\\d{2})[.:](\\d{2,3})\\]")
+    private val OFFSET_PATTERN = Pattern.compile("\\[offset:([+-]?\\d+)\\]", Pattern.CASE_INSENSITIVE)
 
     fun parseFile(lrcFile: File): List<LrcLine> = parseContent(lrcFile.readText())
 
@@ -53,12 +54,13 @@ object LrcParser {
 
         if (tags.isEmpty()) return null
 
-        val startTimeMs = tags.first()
+        val adjustedTags = tags.map { (it - offsetMs).coerceAtLeast(0L) }
+        val startTimeMs = adjustedTags.first()
         val visibleText = textParts.joinToString("").trim()
         if (visibleText.isEmpty()) return null
 
-        val chars = if (tags.size > 1 && textParts.size >= tags.size) {
-            buildWordTimedChars(tags, textParts)
+        val chars = if (adjustedTags.size > 1 && textParts.size >= adjustedTags.size) {
+            buildWordTimedChars(adjustedTags, textParts)
         } else {
             emptyList()
         }
