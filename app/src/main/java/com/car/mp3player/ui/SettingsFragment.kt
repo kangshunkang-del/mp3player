@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
@@ -58,17 +57,6 @@ class SettingsFragment : Fragment() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         binding.switchOverlay.isChecked = settings.overlayEnabled && Settings.canDrawOverlays(requireContext())
-    }
-
-    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri == null) return@registerForActivityResult
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        runCatching {
-            requireContext().contentResolver.takePersistableUriPermission(uri, flags)
-        }
-        settings.addScanTreeUri(uri.toString())
-        refreshScanPathsUi()
-        Toast.makeText(requireContext(), R.string.folder_added, Toast.LENGTH_SHORT).show()
     }
 
     private val installPermission = registerForActivityResult(
@@ -128,15 +116,9 @@ class SettingsFragment : Fragment() {
         refreshScanPathsUi()
         setupOnlineSettings()
 
-        binding.btnPickFolder.setOnClickListener {
-            // Some Android automotive head units ship without a fully compatible
-            // DocumentsUI. Do not let ActivityNotFoundException crash the player.
-            runCatching {
-                pickFolder.launch(null)
-            }.onFailure {
-                showManualScanPathDialog()
-            }
-        }
+        // Automotive Android 10 builds may not ship a stable DocumentsUI.
+        // Use the built-in path dialog directly instead of ACTION_OPEN_DOCUMENT_TREE.
+        binding.btnPickFolder.setOnClickListener { showManualScanPathDialog() }
         binding.btnAddMusic.setOnClickListener { addPresetPath("内置 Music") }
         binding.btnAddDownload.setOnClickListener { addPresetPath("下载目录") }
 
