@@ -37,7 +37,7 @@ class SettingsRepository(context: Context) {
         set(value) = prefs.edit { putFloat(KEY_NEXT_SCALE, value) }
 
     var maxLyricVisualLines: Int
-        get() = prefs.getInt(KEY_MAX_VISUAL_LINES, 2).coerceIn(1, 4)
+        get() = prefs.getInt(KEY_MAX_VISUAL_LINES, 1).coerceIn(1, 4)
         set(value) = prefs.edit { putInt(KEY_MAX_VISUAL_LINES, value.coerceIn(1, 4)) }
 
     var smoothLyrics: Boolean
