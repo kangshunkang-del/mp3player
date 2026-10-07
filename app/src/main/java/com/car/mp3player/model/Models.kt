@@ -14,6 +14,12 @@ data class ArtistGroup(
     val songCount: Int
 )
 
+data class FolderGroup(
+    val name: String,
+    val path: String,
+    val songCount: Int
+)
+
 data class LrcChar(
     val char: String,
     val startTimeMs: Long
