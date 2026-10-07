@@ -29,7 +29,10 @@ object LrcParser {
             .map { it.trim() }
             .filter { it.isNotEmpty() && !it.startsWith("[ti:") && !it.startsWith("[ar:") && !it.startsWith("[al:") && !it.startsWith("[by:") && !it.startsWith("[offset:") }
 
-        val parsed = rawLines.mapNotNull { parseSingleLine(it) }.sortedBy { it.startTimeMs }
+        val offsetMs = OFFSET_PATTERN.matcher(content).let { matcher ->
+            if (matcher.find()) matcher.group(1)?.toLongOrNull() ?: 0L else 0L
+        }
+        val parsed = rawLines.mapNotNull { parseSingleLine(it, offsetMs) }.sortedBy { it.startTimeMs }
         return assignEndTimes(parsed)
     }
 
