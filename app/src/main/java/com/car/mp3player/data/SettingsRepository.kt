@@ -16,24 +16,38 @@ class SettingsRepository(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    init {
+        // The old builds used very small player lyric defaults. Migrate existing installs
+        // once so the lyric area is easier to read on older car head units.
+        if (!prefs.getBoolean(KEY_LYRIC_LAYOUT_V2, false)) {
+            prefs.edit {
+                putFloat(KEY_PLAYER_FONT_SIZE, 28f)
+                putFloat(KEY_PLAYER_NEXT_FONT_SIZE, 22f)
+                putFloat(KEY_CURRENT_SCALE, 1.0f)
+                putFloat(KEY_NEXT_SCALE, 0.88f)
+                putInt(KEY_MAX_VISUAL_LINES, 1)
+                putBoolean(KEY_LYRIC_LAYOUT_V2, true)
+            }
+        }
+
     var fontSizeSp: Float
         get() = prefs.getFloat(KEY_FONT_SIZE, 24f)
         set(value) = prefs.edit { putFloat(KEY_FONT_SIZE, value) }
 
     var playerFontSizeSp: Float
-        get() = prefs.getFloat(KEY_PLAYER_FONT_SIZE, 20f)
+        get() = prefs.getFloat(KEY_PLAYER_FONT_SIZE, 28f)
         set(value) = prefs.edit { putFloat(KEY_PLAYER_FONT_SIZE, value) }
 
     var playerNextFontSizeSp: Float
-        get() = prefs.getFloat(KEY_PLAYER_NEXT_FONT_SIZE, 17f)
+        get() = prefs.getFloat(KEY_PLAYER_NEXT_FONT_SIZE, 22f)
         set(value) = prefs.edit { putFloat(KEY_PLAYER_NEXT_FONT_SIZE, value) }
 
     var currentLineScale: Float
-        get() = prefs.getFloat(KEY_CURRENT_SCALE, 1.05f)
+        get() = prefs.getFloat(KEY_CURRENT_SCALE, 1.0f)
         set(value) = prefs.edit { putFloat(KEY_CURRENT_SCALE, value) }
 
     var nextLineScale: Float
-        get() = prefs.getFloat(KEY_NEXT_SCALE, 0.92f)
+        get() = prefs.getFloat(KEY_NEXT_SCALE, 0.88f)
         set(value) = prefs.edit { putFloat(KEY_NEXT_SCALE, value) }
 
     var maxLyricVisualLines: Int
@@ -311,6 +325,7 @@ class SettingsRepository(context: Context) {
         const val KEY_NEXT_SCALE = "next_line_scale"
         const val KEY_MAX_VISUAL_LINES = "max_visual_lines"
         const val KEY_SMOOTH_LYRICS = "smooth_lyrics"
+        const val KEY_LYRIC_LAYOUT_V2 = "lyric_layout_v2"
         const val KEY_HIGHLIGHT = "highlight_color"
         const val KEY_PENDING = "pending_color"
         const val KEY_NEXT = "next_line_color"
