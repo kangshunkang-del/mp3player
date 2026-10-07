@@ -41,14 +41,14 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: MP3播放器-4.1.0-debug
+          name: MP3播放器-4.1.1-debug
           path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Publish downloadable debug build
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v4.1.0-debug-build
-          name: MP3 播放器 4.1.0 可安装测试版
+          tag_name: v4.1.1-debug-build
+          name: MP3 播放器 4.1.1 可安装测试版
           prerelease: true
           body: |
             这是 GitHub Actions 自动构建的 Debug APK，已使用 Android Debug Key 签名，可直接用于测试安装。
