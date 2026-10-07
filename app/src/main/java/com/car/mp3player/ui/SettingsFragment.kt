@@ -62,7 +62,7 @@ class SettingsFragment : Fragment() {
 
     private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri == null) return@registerForActivityResult
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         runCatching {
             requireContext().contentResolver.takePersistableUriPermission(uri, flags)
         }
@@ -128,7 +128,15 @@ class SettingsFragment : Fragment() {
         refreshScanPathsUi()
         setupOnlineSettings()
 
-        binding.btnPickFolder.setOnClickListener { pickFolder.launch(null) }
+        binding.btnPickFolder.setOnClickListener {
+            // Some Android automotive head units ship without a fully compatible
+            // DocumentsUI. Do not let ActivityNotFoundException crash the player.
+            runCatching {
+                pickFolder.launch(null)
+            }.onFailure {
+                showManualScanPathDialog()
+            }
+        }
         binding.btnAddMusic.setOnClickListener { addPresetPath("内置 Music") }
         binding.btnAddDownload.setOnClickListener { addPresetPath("下载目录") }
 
@@ -561,6 +569,37 @@ class SettingsFragment : Fragment() {
             ).apply { topMargin = 8 }
         }
         container.addView(podcastDesc)
+    }
+
+    private fun showManualScanPathDialog() {
+        val input = TextInputEditText(requireContext()).apply {
+            hint = "/storage/XXXX/Music"
+            setSingleLine(true)
+            setText(settings.scanPaths().firstOrNull().orEmpty())
+            setSelectAllOnFocus(true)
+        }
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 0, 48, 0)
+            addView(input, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ))
+        }
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("输入音乐文件夹路径")
+            .setMessage("例如：/storage/XXXX/Music 或 /sdcard/Music")
+            .setView(container)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton("添加") { _, _ ->
+                val path = input.text?.toString()?.trim().orEmpty()
+                if (path.isNotEmpty()) {
+                    settings.addScanPath(path)
+                    refreshScanPathsUi()
+                    Toast.makeText(requireContext(), R.string.folder_added, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .show()
     }
 
     private fun addPresetPath(label: String) {
