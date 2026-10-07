@@ -327,8 +327,14 @@ class PlayerFragment : Fragment(), PlaybackStateHolder.Listener {
     }
 
     private fun applyPlayerBackground(color: Int) {
-        currentPlayerBgColor = color
-        binding.themeBackground.setBackgroundColor(color)
+        // Keep the album-derived color, but darken it so white lyrics and controls
+        // remain legible and the player feels closer to a premium music app.
+        val red = (Color.red(color) * 0.52f).toInt()
+        val green = (Color.green(color) * 0.52f).toInt()
+        val blue = (Color.blue(color) * 0.52f).toInt()
+        val darkened = Color.rgb(red, green, blue)
+        currentPlayerBgColor = darkened
+        binding.themeBackground.setBackgroundColor(darkened)
         syncBottomNavTheme()
     }
 
