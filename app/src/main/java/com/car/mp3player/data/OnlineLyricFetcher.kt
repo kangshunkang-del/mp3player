@@ -9,15 +9,14 @@ import java.net.URL
 import java.net.URLEncoder
 
 class OnlineLyricFetcher {
-    fun fetch(title: String, artist: String): List<LrcLine>? {
+    fun fetch(title: String, artist: String, durationMs: Long = 0L): List<LrcLine>? {
         val queries = buildSearchQueries(title, artist)
         for ((track, singer) in queries) {
             val providers = listOf(
-                { fetchFromLrcLib(track, singer) },
+                { fetchFromLrcLib(track, singer, durationMs) },
                 { fetchFromNetease(track, singer) },
                 { fetchFromKugou(track, singer) },
                 { fetchFromQqMusic(track, singer) },
-                { fetchFromLyricsOvh(track, singer) }
             )
             for (provider in providers) {
                 val lines = runCatching { provider() }.getOrNull()
@@ -46,48 +45,50 @@ class OnlineLyricFetcher {
             .distinct()
     }
 
-    private fun fetchFromLrcLib(title: String, artist: String): List<LrcLine>? {
-        fetchLrcLibGet(title, artist)?.let { return it }
-        val array = searchLrcLib(title, artist) ?: return null
+    private fun fetchFromLrcLib(title: String, artist: String, durationMs: Long): List<LrcLine>? {
+        fetchLrcLibGet(title, artist, durationMs)?.let { return it }
+        val array = searchLrcLib(title, artist, durationMs) ?: return null
         if (array.length() == 0) return null
 
         var bestScore = -1
         var bestSynced: String? = null
-        var bestPlain: String? = null
-
         for (i in 0 until array.length()) {
             val item = array.optJSONObject(i) ?: continue
-            val score = scoreLrcLibResult(item, title, artist)
+            val synced = item.optString("syncedLyrics").takeIf { it.isNotBlank() } ?: continue
+            val score = scoreLrcLibResult(item, title, artist, durationMs)
             if (score <= bestScore) continue
             bestScore = score
-            bestSynced = item.optString("syncedLyrics").takeIf { it.isNotBlank() }
-            bestPlain = item.optString("plainLyrics").takeIf { it.isNotBlank() }
+            bestSynced = synced
         }
 
-        return parseLyricText(bestSynced, bestPlain)
+        return bestSynced?.let { LrcParser.parseContent(it).takeIf { lines -> lines.isNotEmpty() } }
     }
 
-    private fun fetchLrcLibGet(title: String, artist: String): List<LrcLine>? {
+    private fun fetchLrcLibGet(title: String, artist: String, durationMs: Long): List<LrcLine>? {
         val url = buildString {
             append("https://lrclib.net/api/get?track_name=").append(encode(title))
             if (isUsefulArtist(artist)) {
                 append("&artist_name=").append(encode(artist))
             }
+            if (durationMs > 0L) {
+                append("&duration=").append(durationMs / 1000L)
+            }
         }
         val body = httpGetText(url) ?: return null
         val item = runCatching { JSONObject(body) }.getOrNull() ?: return null
         if (item.optInt("code", 0) == 404) return null
-        return parseLyricText(
-            item.optString("syncedLyrics").takeIf { it.isNotBlank() },
-            item.optString("plainLyrics").takeIf { it.isNotBlank() }
-        )
+        val synced = item.optString("syncedLyrics").takeIf { it.isNotBlank() } ?: return null
+        return LrcParser.parseContent(synced).takeIf { it.isNotEmpty() }
     }
 
-    private fun searchLrcLib(title: String, artist: String): JSONArray? {
+    private fun searchLrcLib(title: String, artist: String, durationMs: Long): JSONArray? {
         val url = buildString {
             append("https://lrclib.net/api/search?track_name=").append(encode(title))
             if (isUsefulArtist(artist)) {
                 append("&artist_name=").append(encode(artist))
+            }
+            if (durationMs > 0L) {
+                append("&q=").append(encode("$title $artist"))
             }
         }
         val body = httpGetText(url) ?: return null
@@ -244,7 +245,7 @@ class OnlineLyricFetcher {
         return null
     }
 
-    private fun scoreLrcLibResult(item: JSONObject, title: String, artist: String): Int {
+    private fun scoreLrcLibResult(item: JSONObject, title: String, artist: String, durationMs: Long): Int {
         val resultTitle = item.optString("trackName", item.optString("name"))
         val resultArtist = item.optString("artistName", item.optString("artist"))
         var score = similarity(title, resultTitle) * 3
@@ -252,6 +253,17 @@ class OnlineLyricFetcher {
             score += similarity(artist, resultArtist) * 2
         }
         if (item.optString("syncedLyrics").isNotBlank()) score += 5
+        if (durationMs > 0L) {
+            val resultDurationMs = (item.optDouble("duration", 0.0) * 1000.0).toLong()
+            if (resultDurationMs > 0L) {
+                val diff = kotlin.math.abs(resultDurationMs - durationMs)
+                score += when {
+                    diff <= 2_000L -> 6
+                    diff <= 5_000L -> 3
+                    else -> -4
+                }
+            }
+        }
         return score
     }
 
