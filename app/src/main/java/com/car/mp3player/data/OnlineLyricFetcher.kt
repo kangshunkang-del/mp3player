@@ -87,9 +87,6 @@ class OnlineLyricFetcher {
             if (isUsefulArtist(artist)) {
                 append("&artist_name=").append(encode(artist))
             }
-            if (durationMs > 0L) {
-                append("&q=").append(encode("$title $artist"))
-            }
         }
         val body = httpGetText(url) ?: return null
         return runCatching { JSONArray(body) }.getOrNull()
