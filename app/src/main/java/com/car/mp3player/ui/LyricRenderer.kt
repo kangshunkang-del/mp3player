@@ -183,7 +183,7 @@ object LyricRenderer {
     ): Float {
         sungPaint.typeface = style.typeface
         pendingPaint.typeface = style.typeface
-        sungPaint.isFakeBoldText = style.bold || true
+        sungPaint.isFakeBoldText = true
         pendingPaint.isFakeBoldText = style.bold
         sungPaint.textSize = style.currentSizePx
         pendingPaint.textSize = style.currentSizePx
