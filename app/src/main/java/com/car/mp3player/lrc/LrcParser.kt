@@ -57,7 +57,7 @@ object LrcParser {
 
         if (tags.isEmpty()) return null
 
-        val adjustedTags = tags.map { (it - offsetMs).coerceAtLeast(0L) }
+        val adjustedTags = tags.map { (it + offsetMs).coerceAtLeast(0L) }
         val startTimeMs = adjustedTags.first()
         val visibleText = textParts.joinToString("").trim()
         if (visibleText.isEmpty()) return null
