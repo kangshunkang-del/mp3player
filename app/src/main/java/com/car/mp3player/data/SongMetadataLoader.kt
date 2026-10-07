@@ -21,6 +21,20 @@ class SongMetadataLoader(
         val artist = settings.lyricSearchArtist(song.path) ?: song.artist
 
         if (!forceOnline) {
+            // When online lyrics are enabled, verify the track against the scored
+            // providers before trusting an existing .lrc sidecar. Older builds
+            // could have cached a wrong same-title lyric, so local lyrics must not
+            // permanently outrank a high-confidence online match.
+            if (settings.onlineLyricsEnabled) {
+                loadOnlineApiLyrics(song)?.let { return it }
+                val fetched = lyricFetcher.fetch(title, artist, song.durationMs)
+                if (!fetched.isNullOrEmpty()) {
+                    val savedPath = LyricFileStore.save(context, song, buildLrcText(fetched))
+                    return LyricLoadResult(fetched, savedPath)
+                }
+            }
+
+            // Offline fallback: keep user-provided sidecar lyrics usable.
             LyricFileStore.read(context, song)?.let { lines ->
                 val path = song.lrcPath ?: LyricFileStore.resolveSidecarPath(context, song)
                 return LyricLoadResult(lines, path)
@@ -30,7 +44,6 @@ class SongMetadataLoader(
                     return LyricLoadResult(lines, savedPath)
                 }
             }
-            loadOnlineApiLyrics(song)?.let { return it }
             loadPodcastDescriptionLyrics(song)?.let { return it }
         } else {
             LyricFileStore.delete(context, song)
