@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.car.mp3player"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 29
         versionCode = 41
         versionName = "4.1.0"
     }
