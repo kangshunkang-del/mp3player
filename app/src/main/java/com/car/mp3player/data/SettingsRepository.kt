@@ -29,6 +29,7 @@ class SettingsRepository(context: Context) {
                 putBoolean(KEY_LYRIC_LAYOUT_V2, true)
             }
         }
+    }
 
     var fontSizeSp: Float
         get() = prefs.getFloat(KEY_FONT_SIZE, 24f)
