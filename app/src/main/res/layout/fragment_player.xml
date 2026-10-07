@@ -106,7 +106,7 @@
             android:id="@+id/controlPanel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_control_panel"
+            android:background="@drawable/bg_player_glass"
             android:orientation="vertical"
             android:paddingHorizontal="22dp"
             android:paddingTop="10dp"
