@@ -9,11 +9,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.car.mp3player.ArtistAdapter
+import com.car.mp3player.FolderAdapter
 import com.car.mp3player.R
 import com.car.mp3player.SongAdapter
 import com.car.mp3player.data.SettingsRepository
 import com.car.mp3player.databinding.FragmentLocalPlaylistBinding
 import com.car.mp3player.model.ArtistGroup
+import com.car.mp3player.model.FolderGroup
 import com.car.mp3player.model.LibraryKind
 import com.car.mp3player.model.PlaylistSortOrder
 import com.car.mp3player.model.PlaylistViewMode
@@ -25,10 +27,12 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
     private val binding get() = _binding!!
     private lateinit var songAdapter: SongAdapter
     private lateinit var artistAdapter: ArtistAdapter
+    private lateinit var folderAdapter: FolderAdapter
     private var query = ""
     private var viewMode = PlaylistViewMode.ALL_SONGS
     private var sortOrder = PlaylistSortOrder.TITLE
     private var selectedArtist: String? = null
+    private var selectedFolderPath: String? = null
     private var lastClickMs = 0L
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -56,6 +60,11 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
             updateToolbar()
             applyFilter()
         }
+        folderAdapter = FolderAdapter { group ->
+            selectedFolderPath = group.path
+            updateToolbar()
+            applyFilter()
+        }
 
         binding.songList.layoutManager = LinearLayoutManager(requireContext())
         binding.songList.adapter = songAdapter
@@ -69,6 +78,7 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
         })
 
         binding.chipAllSongs.setOnClickListener { selectViewMode(PlaylistViewMode.ALL_SONGS) }
+        binding.chipFolders.setOnClickListener { selectViewMode(PlaylistViewMode.BY_FOLDER) }
         binding.chipArtists.setOnClickListener { selectViewMode(PlaylistViewMode.BY_ARTIST) }
         binding.sortGroup.setOnCheckedChangeListener { _, checkedId ->
             sortOrder = when (checkedId) {
@@ -85,15 +95,18 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
     private fun selectViewMode(mode: PlaylistViewMode) {
         viewMode = mode
         selectedArtist = null
+        selectedFolderPath = null
         binding.chipAllSongs.isChecked = mode == PlaylistViewMode.ALL_SONGS
+        binding.chipFolders.isChecked = mode == PlaylistViewMode.BY_FOLDER
         binding.chipArtists.isChecked = mode == PlaylistViewMode.BY_ARTIST
         updateToolbar()
         applyFilter()
     }
 
     private fun exitArtistDetail() {
-        if (selectedArtist == null) return
+        if (selectedArtist == null && selectedFolderPath == null) return
         selectedArtist = null
+        selectedFolderPath = null
         updateToolbar()
         applyFilter()
     }
@@ -129,6 +142,7 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
     private fun currentVisibleSongs(): List<Song> {
         var list = sourceSongs()
         if (selectedArtist != null) list = list.filter { it.artist == selectedArtist }
+        if (selectedFolderPath != null) list = list.filter { folderPath(it) == selectedFolderPath }
         if (query.isNotBlank()) {
             val q = query.lowercase()
             list = list.filter { it.title.lowercase().contains(q) || it.artist.lowercase().contains(q) }
@@ -141,6 +155,10 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
             showArtistList()
             return
         }
+        if (viewMode == PlaylistViewMode.BY_FOLDER && selectedFolderPath == null) {
+            showFolderList()
+            return
+        }
         binding.songList.adapter = songAdapter
         val list = currentVisibleSongs()
         songAdapter.playingPath = PlaybackStateHolder.currentSong?.path
@@ -149,6 +167,33 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
         binding.emptyText.text = getString(R.string.no_songs)
         binding.emptyText.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
         binding.songList.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun showFolderList() {
+        binding.songList.adapter = folderAdapter
+        val songs = sourceSongs()
+        val grouped = songs.mapNotNull { song ->
+            val path = folderPath(song) ?: return@mapNotNull null
+            val folder = java.io.File(path)
+            FolderGroup(folder.name.ifBlank { path }, path, 0)
+        }
+        val nameCounts = grouped.groupingBy { it.name }.eachCount()
+        val folders = grouped.groupBy { it.path }.map { (path, items) ->
+            val rawName = items.first().name
+            val label = if (nameCounts[rawName] == 1) rawName else path
+            FolderGroup(label, path, songs.count { folderPath(it) == path })
+        }.filter {
+            query.isBlank() || it.name.lowercase().contains(query.lowercase())
+        }.sortedBy { it.name.lowercase() }
+        folderAdapter.submitList(folders)
+        binding.songCountText.text = getString(R.string.folder_count, folders.size)
+        binding.emptyText.visibility = if (folders.isEmpty()) View.VISIBLE else View.GONE
+        binding.songList.visibility = if (folders.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun folderPath(song: Song): String? {
+        if (song.path.startsWith("content://")) return null
+        return runCatching { java.io.File(song.path).parentFile?.absolutePath }.getOrNull()
     }
 
     private fun showArtistList() {
@@ -178,13 +223,17 @@ class LocalPlaylistFragment : Fragment(), PlaybackStateHolder.Listener {
     }
 
     private fun updateToolbar() {
-        val inArtistDetail = viewMode == PlaylistViewMode.BY_ARTIST && selectedArtist != null
+        val inArtistDetail =
+            (viewMode == PlaylistViewMode.BY_ARTIST && selectedArtist != null) ||
+                (viewMode == PlaylistViewMode.BY_FOLDER && selectedFolderPath != null)
         binding.toolbar.navigationIcon = if (inArtistDetail) {
             requireContext().getDrawable(android.R.drawable.ic_menu_revert)
         } else null
         binding.toolbar.subtitle = when {
             selectedArtist != null -> selectedArtist
+            selectedFolderPath != null -> java.io.File(selectedFolderPath!!).name.ifBlank { selectedFolderPath }
             viewMode == PlaylistViewMode.BY_ARTIST -> getString(R.string.filter_artists)
+            viewMode == PlaylistViewMode.BY_FOLDER -> getString(R.string.filter_folders)
             else -> null
         }
     }
