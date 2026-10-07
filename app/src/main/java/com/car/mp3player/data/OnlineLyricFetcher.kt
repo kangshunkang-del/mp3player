@@ -28,15 +28,22 @@ class OnlineLyricFetcher {
     }
 
     private fun buildSearchQueries(title: String, artist: String): List<Pair<String, String>> {
-        val cleanTitle = title.trim()
+        val result = mutableListOf<Pair<String, String>>()
+        result += SongNameParser.candidates(title, artist)
+
+        val cleanTitle = SongNameParser.cleanFilename(title)
         val cleanArtist = artist.trim()
         val validArtist = isUsefulArtist(cleanArtist)
-        return listOfNotNull(
-            cleanTitle to cleanArtist,
-            cleanTitle to "",
-            if (validArtist) cleanTitle to cleanArtist.substringBefore(" feat") else null,
-            normalizeTitle(cleanTitle) to if (validArtist) cleanArtist else ""
-        ).distinct()
+        if (cleanTitle.isNotBlank()) {
+            result += cleanTitle to cleanArtist
+            result += cleanTitle to ""
+            if (validArtist) result += cleanTitle to cleanArtist.substringBefore(" feat")
+            result += normalizeTitle(cleanTitle) to if (validArtist) cleanArtist else ""
+        }
+
+        return result
+            .filter { it.first.isNotBlank() }
+            .distinct()
     }
 
     private fun fetchFromLrcLib(title: String, artist: String): List<LrcLine>? {
