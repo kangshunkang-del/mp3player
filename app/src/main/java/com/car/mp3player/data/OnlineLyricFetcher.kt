@@ -9,22 +9,30 @@ import java.net.URL
 import java.net.URLEncoder
 
 class OnlineLyricFetcher {
+    private data class ScoredLyrics(
+        val lines: List<LrcLine>,
+        val score: Int,
+    )
+
     fun fetch(title: String, artist: String, durationMs: Long = 0L): List<LrcLine>? {
-        val queries = buildSearchQueries(title, artist)
-        for ((track, singer) in queries) {
-            val providers = listOf(
+        val candidates = mutableListOf<ScoredLyrics>()
+        for ((track, singer) in buildSearchQueries(title, artist)) {
+            listOf(
                 { fetchFromLrcLib(track, singer, durationMs) },
-                { fetchFromNetease(track, singer) },
-                { fetchFromKugou(track, singer) },
-                { fetchFromQqMusic(track, singer) },
-            )
-            for (provider in providers) {
-                val lines = runCatching { provider() }.getOrNull()
-                if (!lines.isNullOrEmpty()) return lines
+                { fetchFromNetease(track, singer, durationMs) },
+                { fetchFromKugou(track, singer, durationMs) },
+                { fetchFromQqMusic(track, singer, durationMs) },
+            ).forEach { provider ->
+                runCatching { provider() }.getOrNull()?.let { candidates += it }
             }
         }
-        return null
+        return candidates.maxByOrNull { it.score }
+            ?.takeIf { it.score >= minimumAcceptableScore(artist) }
+            ?.lines
     }
+
+    private fun minimumAcceptableScore(artist: String): Int =
+        if (isUsefulArtist(artist)) 38 else 27
 
     private fun buildSearchQueries(title: String, artist: String): List<Pair<String, String>> {
         val result = mutableListOf<Pair<String, String>>()
@@ -45,7 +53,7 @@ class OnlineLyricFetcher {
             .distinct()
     }
 
-    private fun fetchFromLrcLib(title: String, artist: String, durationMs: Long): List<LrcLine>? {
+    private fun fetchFromLrcLib(title: String, artist: String, durationMs: Long): ScoredLyrics? {
         fetchLrcLibGet(title, artist, durationMs)?.let { return it }
         val array = searchLrcLib(title, artist, durationMs) ?: return null
         if (array.length() == 0) return null
@@ -64,7 +72,7 @@ class OnlineLyricFetcher {
         return bestSynced?.let { LrcParser.parseContent(it).takeIf { lines -> lines.isNotEmpty() } }
     }
 
-    private fun fetchLrcLibGet(title: String, artist: String, durationMs: Long): List<LrcLine>? {
+    private fun fetchLrcLibGet(title: String, artist: String, durationMs: Long): ScoredLyrics? {
         val url = buildString {
             append("https://lrclib.net/api/get?track_name=").append(encode(title))
             if (isUsefulArtist(artist)) {
@@ -92,7 +100,7 @@ class OnlineLyricFetcher {
         return runCatching { JSONArray(body) }.getOrNull()
     }
 
-    private fun fetchFromNetease(title: String, artist: String): List<LrcLine>? {
+    private fun fetchFromNetease(title: String, artist: String, durationMs: Long): ScoredLyrics? {
         val keyword = if (isUsefulArtist(artist)) "$title $artist" else title
         val searchUrl =
             "https://music.163.com/api/search/get/web?s=${encode(keyword)}&type=1&offset=0&limit=12"
@@ -129,7 +137,7 @@ class OnlineLyricFetcher {
         return parseLyricText(synced, plain)
     }
 
-    private fun fetchFromKugou(title: String, artist: String): List<LrcLine>? {
+    private fun fetchFromKugou(title: String, artist: String, durationMs: Long): ScoredLyrics? {
         val keyword = if (isUsefulArtist(artist)) "$title $artist" else title
         val searchUrl =
             "https://mobilecdn.kugou.com/api/v3/search/song?format=json&keyword=${encode(keyword)}&page=1&pagesize=8&showtype=1"
@@ -176,7 +184,7 @@ class OnlineLyricFetcher {
         return LrcParser.parseContent(decoded).takeIf { it.isNotEmpty() }
     }
 
-    private fun fetchFromQqMusic(title: String, artist: String): List<LrcLine>? {
+    private fun fetchFromQqMusic(title: String, artist: String, durationMs: Long): ScoredLyrics? {
         val keyword = if (isUsefulArtist(artist)) "$title $artist" else title
         val searchUrl = buildString {
             append("https://c.y.qq.com/soso/fcgi-bin/client_search_cp?")
