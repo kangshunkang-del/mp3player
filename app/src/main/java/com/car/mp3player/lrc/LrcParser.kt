@@ -33,7 +33,7 @@ object LrcParser {
         return assignEndTimes(parsed)
     }
 
-    private fun parseSingleLine(line: String): LrcLine? {
+    private fun parseSingleLine(line: String, offsetMs: Long): LrcLine? {
         val matcher = TAG_PATTERN.matcher(line)
         val tags = mutableListOf<Long>()
         val textParts = mutableListOf<String>()
