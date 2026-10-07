@@ -38,7 +38,7 @@ class SongMetadataLoader(
         }
 
         if (!settings.onlineLyricsEnabled) return null
-        val fetched = lyricFetcher.fetch(title, artist) ?: return null
+        val fetched = lyricFetcher.fetch(title, artist, song.durationMs) ?: return null
         val lrcText = buildLrcText(fetched)
         val savedPath = LyricFileStore.save(context, song, lrcText)
         return LyricLoadResult(fetched, savedPath)
