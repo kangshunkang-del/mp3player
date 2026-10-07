@@ -126,8 +126,17 @@ class OnlineLyricFetcher {
                     arr.optJSONObject(idx)?.optString("name").orEmpty()
                 }
             }.orEmpty()
-            val score = similarity(title, name) * 3 +
+            var score = similarity(title, name) * 3 +
                 if (isUsefulArtist(artist)) similarity(artist, singers) * 2 else 0
+            val resultDuration = song.optLong("dt", 0L)
+            if (durationMs > 0L && resultDuration > 0L) {
+                val diff = kotlin.math.abs(resultDuration - durationMs)
+                score += when {
+                    diff <= 2_000L -> 8
+                    diff <= 5_000L -> 4
+                    else -> -8
+                }
+            }
             if (score > bestScore) {
                 bestScore = score
                 bestId = song.optLong("id")
@@ -161,8 +170,17 @@ class OnlineLyricFetcher {
             val item = info.optJSONObject(i) ?: continue
             val songName = item.optString("songname", item.optString("filename"))
             val singerName = item.optString("singername")
-            val score = similarity(title, songName) * 3 +
+            var score = similarity(title, songName) * 3 +
                 if (isUsefulArtist(artist)) similarity(artist, singerName) * 2 else 0
+            val resultDuration = item.optLong("duration", 0L) * 1000L
+            if (durationMs > 0L && resultDuration > 0L) {
+                val diff = kotlin.math.abs(resultDuration - durationMs)
+                score += when {
+                    diff <= 2_000L -> 8
+                    diff <= 5_000L -> 4
+                    else -> -8
+                }
+            }
             if (score > bestScore) {
                 bestScore = score
                 bestHash = item.optString("hash").takeIf { it.isNotBlank() }
@@ -221,8 +239,17 @@ class OnlineLyricFetcher {
                     }
                 }.getOrDefault(raw)
             }
-            val score = similarity(title, name) * 3 +
+            var score = similarity(title, name) * 3 +
                 if (isUsefulArtist(artist)) similarity(artist, singer) * 2 else 0
+            val resultDuration = song.optLong("interval", 0L) * 1000L
+            if (durationMs > 0L && resultDuration > 0L) {
+                val diff = kotlin.math.abs(resultDuration - durationMs)
+                score += when {
+                    diff <= 2_000L -> 8
+                    diff <= 5_000L -> 4
+                    else -> -8
+                }
+            }
             if (score > bestScore) {
                 bestScore = score
                 bestSongId = song.optLong("songid")
