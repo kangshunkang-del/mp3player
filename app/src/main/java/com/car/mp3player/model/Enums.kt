@@ -20,7 +20,8 @@ enum class LibraryKind {
 
 enum class PlaylistViewMode {
     ALL_SONGS,
-    BY_ARTIST
+    BY_ARTIST,
+    BY_FOLDER
 }
 
 enum class PlaylistSortOrder {
