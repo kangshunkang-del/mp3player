@@ -76,7 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintGuide_percent="0.42" />
+                app:layout_constraintGuide_percent="0.38" />
 
             <com.car.mp3player.ui.VinylRecordView
                 android:id="@+id/vinylRecord"
@@ -93,8 +93,8 @@
                 android:id="@+id/scrollLyricView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:paddingHorizontal="22dp"
-                android:paddingVertical="16dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="8dp"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
