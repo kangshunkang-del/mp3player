@@ -11,8 +11,8 @@ android {
         applicationId = "com.car.mp3player"
         minSdk = 24
         targetSdk = 29
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(17) ?: 43).coerceAtLeast(43)
-        versionName = "4.1.2"
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(17) ?: 44).coerceAtLeast(44)
+        versionName = "4.1.3"
     }
 
     val releaseStoreFile = System.getenv("ANDROID_KEYSTORE_PATH")
