@@ -3,6 +3,8 @@ package com.car.mp3player.ui
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.Choreographer
 import android.view.GestureDetector
@@ -23,6 +25,7 @@ class ScrollLyricView @JvmOverloads constructor(
     private val sungPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val nextPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val pendingPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val fadePaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     private var lines: List<LrcLine> = emptyList()
     private var targetPositionMs = 0L
@@ -188,10 +191,8 @@ class ScrollLyricView @JvmOverloads constructor(
                     style, width.toFloat(), sungPaint, pendingPaint
                 )
             } else {
-                val size = when (abs(i - idx)) {
-                    1 -> style.nextSizePx
-                    else -> style.otherSizePx
-                }
+                val distance = abs(i - idx)
+                val size = if (distance == 1) style.nextSizePx else style.otherSizePx
                 val color = if (i < idx) style.nextLineColor else style.pendingColor
                 LyricRenderer.drawWrappedStaticLine(
                     canvas, lines[i].text, lineCenterY, nextPaint, style,
@@ -199,6 +200,28 @@ class ScrollLyricView @JvmOverloads constructor(
                 )
             }
         }
+
+        // Apple Music-inspired top/bottom fade: the lyric stream fills the whole
+        // right pane, while distant lines softly disappear at the edges.
+        drawEdgeFade(canvas, style)
+    }
+
+    private fun drawEdgeFade(canvas: Canvas, style: LyricRenderer.Style) {
+        val fade = (height * 0.18f).coerceAtLeast(36f)
+        fadePaint.shader = LinearGradient(
+            0f, 0f, 0f, fade,
+            0xD9000000.toInt(), 0x00000000,
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRect(0f, 0f, width.toFloat(), fade, fadePaint)
+
+        fadePaint.shader = LinearGradient(
+            0f, height - fade, 0f, height.toFloat(),
+            0x00000000, 0xD9000000.toInt(),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRect(0f, height - fade, width.toFloat(), height.toFloat(), fadePaint)
+        fadePaint.shader = null
     }
 
     private fun findIndex(positionMs: Long): Int {
