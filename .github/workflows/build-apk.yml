@@ -33,22 +33,21 @@ jobs:
         with:
           gradle-version: 8.2
 
-      - name: Test, lint and build release APK
-        run: gradle testDebugUnitTest lintDebug assembleRelease --no-daemon
+      - name: Test, lint and build installable debug APK
+        run: gradle testDebugUnitTest lintDebug assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: MP3播放器-4.1.0-待签名
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: MP3播放器-4.1.0-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish downloadable build
+      - name: Publish downloadable debug build
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v4.1.0-build
-          name: MP3 播放器 4.1.0 云端构建
+          tag_name: v4.1.0-debug-build
+          name: MP3 播放器 4.1.0 可安装测试版
           prerelease: true
           body: |
-            这是自动构建的未签名 APK，仅供后续使用原车机签名进行正式发布。
-            车机请通过应用内更新安装腾讯云分发的正式签名版本。
-          files: app/build/outputs/apk/release/app-release-unsigned.apk
+            这是 GitHub Actions 自动构建的 Debug APK，已使用 Android Debug Key 签名，可直接用于测试安装。
+          files: app/build/outputs/apk/debug/app-debug.apk
