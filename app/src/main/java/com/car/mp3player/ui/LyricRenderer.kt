@@ -70,7 +70,7 @@ object LyricRenderer {
         val overlaySize = settings.fontSizeSp
         val baseCurrent = if (forPlayer) settings.playerFontSizeSp else overlaySize
         val baseNext = if (forPlayer) settings.playerNextFontSizeSp else overlaySize * 0.88f
-        val baseOther = if (forPlayer) settings.playerFontSizeSp * 0.82f else overlaySize * 0.85f
+        val baseOther = if (forPlayer) settings.playerNextFontSizeSp * 0.78f else overlaySize * 0.85f
         val family = settings.lyricFontFamily()
         val bold = !forPlayer && settings.overlayLyricBold
         val themeHighlight = settings.highlightColor
