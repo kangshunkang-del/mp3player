@@ -62,6 +62,19 @@
             app:chipStrokeWidth="1dp" />
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/chipFolders"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:checked="false"
+            android:minHeight="48dp"
+            android:text="@string/filter_folders"
+            app:chipBackgroundColor="@color/chip_bg"
+            app:chipStrokeColor="@color/netease_red"
+            app:chipStrokeWidth="1dp" />
+
+        <com.google.android.material.chip.Chip
             android:id="@+id/chipArtists"
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
