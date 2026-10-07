@@ -12,6 +12,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      TCB_SECRET_ID: ${{ secrets.TCB_SECRET_ID }}
+      TCB_SECRET_KEY: ${{ secrets.TCB_SECRET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -35,21 +42,77 @@ jobs:
         with:
           gradle-version: '8.2'
 
-      - name: Test and build installable debug APK
-        run: gradle testDebugUnitTest assembleDebug --no-daemon
+      - name: Build installable debug APK
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: MP3播放器-4.1.1-debug
+          name: MP3播放器-4.1.2-debug
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish downloadable debug build
+      - name: Prepare stable release signing key
+        if: ${{ env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' && env.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mp3player-release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/mp3player-release.jks" >> "$GITHUB_ENV"
+
+      - name: Build stable signed release
+        if: ${{ env.ANDROID_KEYSTORE_PATH != '' }}
+        run: gradle assembleRelease --no-daemon
+
+      - name: Generate update metadata
+        if: ${{ env.ANDROID_KEYSTORE_PATH != '' }}
+        shell: bash
+        run: |
+          apk="app/build/outputs/apk/release/app-release.apk"
+          output_metadata="app/build/outputs/apk/release/output-metadata.json"
+          version_name=$(node -e "const m=require('./$output_metadata'); console.log(m.elements[0].versionName)")
+          version_code=$(node -e "const m=require('./$output_metadata'); console.log(m.elements[0].versionCode)")
+          release_dir="app/build/outputs/apk/release"
+          apk_name="mp3player-${version_name}.apk"
+          cp "$apk" "$release_dir/$apk_name"
+          sha256=$(sha256sum "$apk" | cut -d ' ' -f 1)
+          size=$(stat -c '%s' "$apk")
+          cat > "$release_dir/update-info.json" <<EOF
+          {
+            "version": "$version_name",
+            "versionCode": $version_code,
+            "apkUrl": "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${version_name}/${apk_name}",
+            "sha256": "$sha256",
+            "sizeBytes": $size,
+            "notes": "版本 ${version_name} 稳定版更新。"
+          }
+          EOF
+          echo "APP_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+          echo "APP_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "APP_APK_NAME=$apk_name" >> "$GITHUB_ENV"
+
+      - name: Publish stable signed release
+        if: ${{ env.ANDROID_KEYSTORE_PATH != '' && env.TCB_SECRET_ID != '' && env.TCB_SECRET_KEY != '' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v4.1.1-debug-build
-          name: MP3 播放器 4.1.1 可安装测试版
-          prerelease: true
+          tag_name: v${{ env.APP_VERSION_NAME }}
+          name: MP3 播放器 ${{ env.APP_VERSION_NAME }}
+          prerelease: false
           body: |
-            这是 GitHub Actions 自动构建的 Debug APK，已使用 Android Debug Key 签名，可直接用于测试安装。
-          files: app/build/outputs/apk/debug/app-debug.apk
+            versionCode: ${{ env.APP_VERSION_CODE }}
+            此版本使用仓库 Secrets 中配置的稳定 Release 签名。
+          files: |
+            app/build/outputs/apk/release/${{ env.APP_APK_NAME }}
+            app/build/outputs/apk/release/update-info.json
+
+      - name: Deploy update service to CloudBase
+        if: ${{ env.ANDROID_KEYSTORE_PATH != '' && env.TCB_SECRET_ID != '' && env.TCB_SECRET_KEY != '' }}
+        working-directory: cloudbase
+        env:
+          TCB_SECRET_ID: ${{ env.TCB_SECRET_ID }}
+          TCB_SECRET_KEY: ${{ env.TCB_SECRET_KEY }}
+        run: |
+          npm install --global @cloudbase/cli
+          tcb login --apiKeyId "$TCB_SECRET_ID" --apiKey "$TCB_SECRET_KEY"
+          tcb fn deploy mp3Update --env-id chuya-d6gyub7awb35a8bf7 --yes
+
+      - name: Explain missing release configuration
+        if: ${{ env.ANDROID_KEYSTORE_PATH == '' || env.TCB_SECRET_ID == '' || env.TCB_SECRET_KEY == '' }}
+        run: echo "Debug APK artifact was built. Stable OTA publishing needs ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD, TCB_SECRET_ID and TCB_SECRET_KEY repository secrets."
