@@ -69,7 +69,7 @@ class ScrollLyricView @JvmOverloads constructor(
         override fun doFrame(frameTimeNanos: Long) {
             if (!animating) return
             val smooth = settings.smoothLyrics
-            val lerp = if (smooth) 0.18f else 1f
+            val lerp = if (smooth) 0.42f else 1f
             displayPositionMs += (targetPositionMs - displayPositionMs) * lerp
             if (!isUserScrolling) {
                 userScrollOffset *= 0.9f
@@ -139,7 +139,7 @@ class ScrollLyricView @JvmOverloads constructor(
     }
 
     private fun computeTargetScroll() {
-        val pos = if (settings.smoothLyrics) targetPositionMs else displayPositionMs.toLong()
+        val pos = targetPositionMs
         val idx = findIndex(pos)
         val density = resources.displayMetrics.scaledDensity
         val style = LyricRenderer.styleFrom(context, settings, density, forPlayer = true)
@@ -174,7 +174,7 @@ class ScrollLyricView @JvmOverloads constructor(
             return
         }
 
-        val idx = findIndex(displayPositionMs.toLong())
+        val idx = findIndex(targetPositionMs)
         val blockH = blockHeight(style)
         val scrollY = effectiveScrollY()
 
