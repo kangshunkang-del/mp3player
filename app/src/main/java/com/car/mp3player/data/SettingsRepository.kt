@@ -31,6 +31,22 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    // Landscape player lyric redesign: enlarge the active line while preserving
+    // any custom lyric settings the user may already have chosen.
+    init {
+        if (!prefs.getBoolean(KEY_LYRIC_LAYOUT_V3, false)) {
+            prefs.edit {
+                if (prefs.getFloat(KEY_PLAYER_FONT_SIZE, 28f) == 28f) {
+                    putFloat(KEY_PLAYER_FONT_SIZE, 34f)
+                }
+                if (prefs.getFloat(KEY_PLAYER_NEXT_FONT_SIZE, 22f) == 22f) {
+                    putFloat(KEY_PLAYER_NEXT_FONT_SIZE, 24f)
+                }
+                putBoolean(KEY_LYRIC_LAYOUT_V3, true)
+            }
+        }
+    }
+
     var fontSizeSp: Float
         get() = prefs.getFloat(KEY_FONT_SIZE, 24f)
         set(value) = prefs.edit { putFloat(KEY_FONT_SIZE, value) }
@@ -327,6 +343,7 @@ class SettingsRepository(context: Context) {
         const val KEY_MAX_VISUAL_LINES = "max_visual_lines"
         const val KEY_SMOOTH_LYRICS = "smooth_lyrics"
         const val KEY_LYRIC_LAYOUT_V2 = "lyric_layout_v2"
+        const val KEY_LYRIC_LAYOUT_V3 = "lyric_layout_v3"
         const val KEY_HIGHLIGHT = "highlight_color"
         const val KEY_PENDING = "pending_color"
         const val KEY_NEXT = "next_line_color"
