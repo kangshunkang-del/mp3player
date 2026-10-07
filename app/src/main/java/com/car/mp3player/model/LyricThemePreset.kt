@@ -16,7 +16,7 @@ enum class LyricThemePreset(
     CLASSIC(
         "classic", "经典白",
         0xFFFFFFFF.toInt(), 0x99FFFFFF.toInt(), 0xCCFFFFFF.toInt(),
-        22f, 18f, 26f
+        28f, 22f, 26f
     ),
     NETEASE(
         "netease", "网易云红",
@@ -26,7 +26,7 @@ enum class LyricThemePreset(
     PINK(
         "pink", "淡粉",
         0xFFE891A8.toInt(), 0x99FFFFFF.toInt(), 0xCCFFFFFF.toInt(),
-        21f, 17f, 25f
+        27f, 21f, 25f
     ),
     GREEN(
         "green", "淡绿",
