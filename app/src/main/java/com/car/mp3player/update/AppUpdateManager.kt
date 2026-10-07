@@ -10,9 +10,9 @@ import com.car.mp3player.BuildConfig
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 data class AppUpdateInfo(
     val version: String,
@@ -32,27 +32,64 @@ sealed interface InstallRequest {
 
 class AppUpdateManager(private val context: Context) {
     suspend fun check(): AppUpdateInfo = withContext(Dispatchers.IO) {
-        val connection = open(VERSION_URL)
+        val releaseConnection = open(LATEST_RELEASE_URL)
         try {
-            check(connection.responseCode in 200..299) { "检查更新失败（${connection.responseCode}）" }
-            check(connection.url.protocol == "https") { "更新服务被重定向到不安全地址" }
-            val json = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
-            val apkUrl = json.getString("apkUrl")
-            check(URL(apkUrl).protocol == "https") { "更新地址不安全" }
-            val sha256 = json.getString("sha256").lowercase()
-            check(sha256.matches(Regex("^[a-f0-9]{64}$"))) { "更新包校验信息无效" }
-            val sizeBytes = json.getLong("sizeBytes")
-            check(sizeBytes > 0L) { "更新包大小无效" }
-            AppUpdateInfo(
-                version = json.getString("version"),
-                versionCode = json.getInt("versionCode"),
-                apkUrl = apkUrl,
-                sha256 = sha256,
-                sizeBytes = sizeBytes,
-                notes = json.optString("notes", ""),
+            check(releaseConnection.responseCode in 200..299) {
+                "检查更新失败（${releaseConnection.responseCode}）"
+            }
+            check(releaseConnection.url.protocol == "https") {
+                "更新服务被重定向到不安全地址"
+            }
+
+            val release = JSONObject(
+                releaseConnection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() },
             )
+            check(!release.optBoolean("draft", false) && !release.optBoolean("prerelease", false)) {
+                "当前没有稳定版更新"
+            }
+
+            val assets = release.optJSONArray("assets")
+                ?: error("稳定版更新信息缺失")
+            var metadataUrl: String? = null
+            for (index in 0 until assets.length()) {
+                val asset = assets.getJSONObject(index)
+                if (asset.optString("name") == RELEASE_METADATA_ASSET) {
+                    metadataUrl = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
+                    break
+                }
+            }
+            check(metadataUrl != null && URL(metadataUrl).protocol == "https") {
+                "稳定版更新信息地址无效"
+            }
+
+            val metadataConnection = open(metadataUrl!!)
+            try {
+                check(metadataConnection.responseCode in 200..299) {
+                    "读取更新信息失败（${metadataConnection.responseCode}）"
+                }
+                val json = JSONObject(
+                    metadataConnection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() },
+                )
+                val apkUrl = json.getString("apkUrl")
+                check(URL(apkUrl).protocol == "https") { "更新地址不安全" }
+                val sha256 = json.getString("sha256").lowercase()
+                check(sha256.matches(Regex("^[a-f0-9]{64}$"))) { "更新包校验信息无效" }
+                val sizeBytes = json.getLong("sizeBytes")
+                check(sizeBytes > 0L) { "更新包大小无效" }
+
+                AppUpdateInfo(
+                    version = json.getString("version"),
+                    versionCode = json.getInt("versionCode"),
+                    apkUrl = apkUrl,
+                    sha256 = sha256,
+                    sizeBytes = sizeBytes,
+                    notes = json.optString("notes", ""),
+                )
+            } finally {
+                metadataConnection.disconnect()
+            }
         } finally {
-            connection.disconnect()
+            releaseConnection.disconnect()
         }
     }
 
@@ -137,7 +174,8 @@ class AppUpdateManager(private val context: Context) {
         }
 
     companion object {
-        const val VERSION_URL =
-            "https://chuya-d6gyub7awb35a8bf7-1300580117.ap-shanghai.app.tcloudbase.com/mp3/version.json"
+        const val LATEST_RELEASE_URL =
+            "https://api.github.com/repos/kangshunkang-del/mp3player/releases/latest"
+        const val RELEASE_METADATA_ASSET = "update-info.json"
     }
 }
