@@ -61,11 +61,20 @@ class MusicScanner(
             while (cursor.moveToNext()) {
                 val path = cursor.getString(dataCol) ?: continue
                 if (!isAudioFile(path)) continue
+                val filename = File(path).nameWithoutExtension
+                val metadataTitle = cursor.getString(titleCol).orEmpty().trim()
+                val metadataArtist = cursor.getString(artistCol).orEmpty().trim()
+                val parsed = SongNameParser.candidates(
+                    if (metadataTitle.isBlank()) filename else metadataTitle,
+                    metadataArtist
+                ).firstOrNull()
+                val title = parsed?.first?.takeIf { it.isNotBlank() } ?: filename
+                val artist = parsed?.second?.takeIf { it.isNotBlank() } ?: "未知歌手"
                 songs.add(
                     Song(
                         id = cursor.getLong(idCol),
-                        title = cursor.getString(titleCol) ?: File(path).nameWithoutExtension,
-                        artist = cursor.getString(artistCol) ?: "未知歌手",
+                        title = title,
+                        artist = artist,
                         path = path,
                         lrcPath = findLrc(path),
                         durationMs = cursor.getLong(durationCol).coerceAtLeast(0L)
@@ -84,14 +93,26 @@ class MusicScanner(
             root.walkTopDown().maxDepth(8)
                 .filter { it.isFile && isAudioFile(it.absolutePath) }
                 .forEach { file ->
+                    val filename = file.nameWithoutExtension
+                    val metadata = readMetadata(file.absolutePath)
+                    val parsed = SongNameParser.candidates(
+                        metadata.first?.takeIf { it.isNotBlank() } ?: filename,
+                        metadata.second.orEmpty()
+                    ).firstOrNull()
+                    val title = parsed?.first?.takeIf { it.isNotBlank() }
+                        ?: SongNameParser.cleanFilename(filename)
+                    val artist = parsed?.second?.takeIf { it.isNotBlank() }
+                        ?: file.parentFile?.name?.takeIf { it.isNotBlank() }
+                        ?: "本地音乐"
+
                     songs.add(
                         Song(
                             id = id++,
-                            title = file.nameWithoutExtension,
-                            artist = file.parentFile?.name ?: "本地音乐",
+                            title = title,
+                            artist = artist,
                             path = file.absolutePath,
                             lrcPath = findLrc(file.absolutePath),
-                            durationMs = readDurationMs(file.absolutePath)
+                            durationMs = metadata.third ?: readDurationMs(file.absolutePath)
                         )
                     )
                 }
@@ -122,20 +143,37 @@ class MusicScanner(
         if (!isAudioFile(name)) return
         val uri = file.uri.toString()
         val id = nextId()
-        val title = name.substringBeforeLast('.')
+        val parsed = SongNameParser.candidates(name.substringBeforeLast('.'), "").firstOrNull()
+        val title = parsed?.first?.takeIf { it.isNotBlank() } ?: name.substringBeforeLast('.')
+        val artist = parsed?.second?.takeIf { it.isNotBlank() } ?: "本地音乐"
         out.add(
             Song(
                 id = id,
                 title = title,
-                artist = "本地音乐",
+                artist = artist,
                 path = uri,
                 lrcPath = LyricFileStore.resolveSidecarPath(
                     context,
-                    Song(id, title, "本地音乐", uri, null)
+                    Song(id, title, artist, uri, null)
                 ),
                 durationMs = readDurationMs(uri)
             )
         )
+    }
+
+    private fun readMetadata(path: String): Triple<String?, String?, Long?> {
+        val retriever = MediaMetadataRetriever()
+        return runCatching {
+            retriever.setDataSource(path)
+            Triple(
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE),
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST),
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    ?.toLongOrNull()?.coerceAtLeast(0L)
+            )
+        }.getOrDefault(Triple(null, null, null)).also {
+            runCatching { retriever.release() }
+        }
     }
 
     private fun readDurationMs(pathOrUri: String): Long {
