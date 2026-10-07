@@ -17,8 +17,6 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-      TCB_SECRET_ID: ${{ secrets.TCB_SECRET_ID }}
-      TCB_SECRET_KEY: ${{ secrets.TCB_SECRET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -48,7 +46,7 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: MP3播放器-4.1.3-debug
+          name: MP3播放器-${{ github.run_number }}-debug
           path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Prepare stable release signing key
@@ -89,7 +87,7 @@ jobs:
           echo "APP_APK_NAME=$apk_name" >> "$GITHUB_ENV"
 
       - name: Publish stable signed release
-        if: ${{ env.ANDROID_KEYSTORE_PATH != '' && env.TCB_SECRET_ID != '' && env.TCB_SECRET_KEY != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_PATH != '' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.APP_VERSION_NAME }}
@@ -102,17 +100,6 @@ jobs:
             app/build/outputs/apk/release/${{ env.APP_APK_NAME }}
             app/build/outputs/apk/release/update-info.json
 
-      - name: Deploy update service to CloudBase
-        if: ${{ env.ANDROID_KEYSTORE_PATH != '' && env.TCB_SECRET_ID != '' && env.TCB_SECRET_KEY != '' }}
-        working-directory: cloudbase
-        env:
-          TCB_SECRET_ID: ${{ env.TCB_SECRET_ID }}
-          TCB_SECRET_KEY: ${{ env.TCB_SECRET_KEY }}
-        run: |
-          npm install --global @cloudbase/cli
-          tcb login --apiKeyId "$TCB_SECRET_ID" --apiKey "$TCB_SECRET_KEY"
-          tcb fn deploy mp3Update --env-id chuya-d6gyub7awb35a8bf7 --yes
-
       - name: Explain missing release configuration
-        if: ${{ env.ANDROID_KEYSTORE_PATH == '' || env.TCB_SECRET_ID == '' || env.TCB_SECRET_KEY == '' }}
-        run: echo "Debug APK artifact was built. Stable OTA publishing needs ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD, TCB_SECRET_ID and TCB_SECRET_KEY repository secrets."
+        if: ${{ env.ANDROID_KEYSTORE_PATH == '' }}
+        run: echo "Debug APK artifact was built. Stable OTA publishing needs ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD repository secrets."
